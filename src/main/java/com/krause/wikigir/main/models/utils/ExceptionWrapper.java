@@ -1,4 +1,4 @@
-package com.krause.wikigir.models.utils;
+package com.krause.wikigir.main.models.utils;
 
 /**
  * Provides a common handler for exceptions, without having to wrap them in try-catch at each location.

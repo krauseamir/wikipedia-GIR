@@ -1,16 +1,16 @@
-package com.krause.wikigir.models.general;
+package com.krause.wikigir.main.models.general;
 
-import com.krause.wikigir.models.utils.JsonCreator;
-import com.krause.wikigir.models.utils.Pair;
-import com.krause.wikigir.models.utils.StringsToIdsMapper;
+import com.krause.wikigir.main.models.utils.JsonCreator;
+import com.krause.wikigir.main.models.utils.Pair;
+import com.krause.wikigir.main.models.utils.StringsIdsMapper;
 
 import java.util.*;
 
 /**
  * Stores ids (of words / articles) mapped to their scores, computed in some manner (e.g., word-score pairs generated
- * by the tf-idf scheme for each article).
+ * by the tf-idf scheme for each article, titles-scores created by the named-locations detection for each article, etc.)
  */
-public class IdsScoresVector
+public class ScoredVector
 {
     private int[] ids;
     private float[] scores;
@@ -20,7 +20,7 @@ public class IdsScoresVector
      * @param ids       the IDs, in order (the i-th ID matches the i-th score).
      * @param scores    the scores, in order (the i-th score matches the i-th ID).
      */
-    public IdsScoresVector(int[] ids, float[] scores)
+    public ScoredVector(int[] ids, float[] scores)
     {
         this.ids = ids;
         this.scores = scores;
@@ -55,10 +55,10 @@ public class IdsScoresVector
      * translating ids to strings (e.g. words, titles, categories, etc.) The result is sorted by the scores, in
      * descending order.
      *
-     * @param mapper a {@link StringsToIdsMapper} object to translate the IDs.
+     * @param mapper a {@link StringsIdsMapper} object to translate the IDs.
      * @return       a JSON representation of the vector.
      */
-    public String toString(StringsToIdsMapper mapper)
+    public String toString(StringsIdsMapper mapper)
     {
         List<Pair<String, Float>> pairings = new ArrayList<>();
         for(int i = 0; i < this.ids.length; i++)

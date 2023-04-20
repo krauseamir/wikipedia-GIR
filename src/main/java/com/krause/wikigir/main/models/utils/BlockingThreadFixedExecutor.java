@@ -1,7 +1,6 @@
-package com.krause.wikigir.models.utils;
+package com.krause.wikigir.main.models.utils;
 
 import com.krause.wikigir.main.Constants;
-import com.thoughtworks.qdox.model.expression.Constant;
 
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
@@ -19,6 +18,14 @@ import java.util.Properties;
  */
 public class BlockingThreadFixedExecutor extends ThreadPoolExecutor
 {
+    /**
+     * Constructor with default values, utilizing all cores for fastest processing.
+     */
+    public BlockingThreadFixedExecutor()
+    {
+        this(Runtime.getRuntime().availableProcessors(), 1000, 1000);
+    }
+
     /**
      * Constructor.
      * <br><br>
@@ -64,7 +71,7 @@ public class BlockingThreadFixedExecutor extends ThreadPoolExecutor
             long initialTime = System.currentTimeMillis();
 
             while(!this.isTerminated() && System.currentTimeMillis() < initialTime +
-                   Long.parseLong(p.getProperty("executor.termination_wait_time")))
+                   Long.parseLong(p.getProperty("wikigir.executor.termination_wait_time")))
             {
                 // Make it possible to do online adjustments to the waiting time, if needed.
                 p.load(new BufferedInputStream(new FileInputStream(Constants.CONFIGURATION_FILE)));

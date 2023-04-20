@@ -1,4 +1,4 @@
-package com.krause.wikigir.models.utils;
+package com.krause.wikigir.main.models.utils;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -9,7 +9,7 @@ import java.io.*;
  * Holds a mapping (and reverse mapping) of strings to integer IDs. The mapping is written
  * to disk for future retrieval and id continuity (i.e., same int identification throughout runs).
  */
-public class StringsToIdsMapper
+public class StringsIdsMapper
 {
     private String filePath;
 
@@ -17,11 +17,11 @@ public class StringsToIdsMapper
     private Map<Integer, String> idsToStrings;
 
     /**
-     * Constructor.
+     * Constructor 1.
      * @param filePath the full (absolute) path to the file containing the mapping.
      *                 (Does not initially exist, created upon first creation).
      */
-    public StringsToIdsMapper(String filePath)
+    public StringsIdsMapper(String filePath)
     {
         this.filePath = filePath;
         this.stringsToIds = new HashMap<>();
@@ -29,12 +29,25 @@ public class StringsToIdsMapper
     }
 
     /**
+     * Constructor 2. Used in case we want to add the words to be mapped externally (not to/from stored file).
+     */
+    public StringsIdsMapper()
+    {
+        this(null);
+    }
+
+    /**
      * Creates the mapping, either by loading from disk or anew.
      * @param strings   the strings to be matched with identifiers.
      * @return          this mapping object.
      */
-    public StringsToIdsMapper create(Collection<String> strings)
+    public StringsIdsMapper createFromCollection(Collection<String> strings)
     {
+        if(this.filePath == null)
+        {
+            return this;
+        }
+
         if(new File(this.filePath).exists())
         {
             new Serializer().deserialize();
@@ -44,8 +57,7 @@ public class StringsToIdsMapper
             int nextId = 0;
             for(String string : strings)
             {
-                this.stringsToIds.put(string, nextId);
-                this.idsToStrings.put(nextId, string);
+                add(string, nextId);
                 nextId++;
             }
 
@@ -53,6 +65,12 @@ public class StringsToIdsMapper
         }
 
         return this;
+    }
+
+    public void add(String s, int id)
+    {
+        this.stringsToIds.put(s, id);
+        this.idsToStrings.put(id, s);
     }
 
     /**
@@ -93,23 +111,31 @@ public class StringsToIdsMapper
         return this.idsToStrings.keySet();
     }
 
+    public int size()
+    {
+        return this.idsToStrings.size();
+    }
+
     private class Serializer implements CustomSerializable
     {
+        @Override
         public String filePath()
         {
-            return StringsToIdsMapper.this.filePath;
+            return StringsIdsMapper.this.filePath;
         }
 
+        @Override
         public void customSerialize(DataOutputStream out) throws IOException
         {
-            out.writeInt(StringsToIdsMapper.this.stringsToIds.size());
-            for(Map.Entry<String, Integer> e : StringsToIdsMapper.this.stringsToIds.entrySet())
+            out.writeInt(StringsIdsMapper.this.stringsToIds.size());
+            for(Map.Entry<String, Integer> e : StringsIdsMapper.this.stringsToIds.entrySet())
             {
                 out.writeUTF(e.getKey());
                 out.writeInt(e.getValue());
             }
         }
 
+        @Override
         public void customDeserialize(DataInputStream in) throws IOException
         {
             int size = in.readInt();
@@ -117,8 +143,8 @@ public class StringsToIdsMapper
             {
                 String title = in.readUTF();
                 int id = in.readInt();
-                StringsToIdsMapper.this.stringsToIds.put(title, id);
-                StringsToIdsMapper.this.idsToStrings.put(id, title);
+                StringsIdsMapper.this.stringsToIds.put(title, id);
+                StringsIdsMapper.this.idsToStrings.put(id, title);
             }
         }
     }

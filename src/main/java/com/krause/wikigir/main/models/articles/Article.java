@@ -1,7 +1,8 @@
-package com.krause.wikigir.models.articles;
+package com.krause.wikigir.main.models.articles;
 
-import com.krause.wikigir.models.general.Coordinates;
-import com.krause.wikigir.models.utils.Pair;
+import com.krause.wikigir.main.models.general.Coordinates;
+import com.krause.wikigir.main.models.general.ScoredVector;
+import com.krause.wikigir.main.models.utils.Pair;
 
 import java.util.*;
 
@@ -19,9 +20,12 @@ public class Article extends WikiEntity
     // with location, it is stored as well.
     private LocationsData locationsData;
 
+    // The top-k words (by their tf-idf values) in the article.
+    private ScoredVector wordsScoredVector;
+
     // The top-k named locations when sorted by their counts-then-ordinal in the page and their scores, without
     // any additional modulations (such as is-a-in, located-at or country modifiers). Simply root(count/total).
-    private Wordants namedLocationWordants;
+    private ScoredVector namedLocationScoredVector;
 
     // The assigned location type for the page (country, settlement, landmark, region, etc.) as heuristically parsed.
     private LocationType locationType;
@@ -53,12 +57,11 @@ public class Article extends WikiEntity
     public Article(Article other)
     {
         super(other.title);
-        super.wordsWordants = other.wordsWordants;
-        super.namedLocationsWordants = other.namedLocationsWordants;
+        this.wordsScoredVector = other.wordsScoredVector;
+        this.namedLocationScoredVector = other.namedLocationScoredVector;
         this.coordinates = other.coordinates;
         this.categoryIds = other.categoryIds;
         this.locationsData = other.locationsData;
-        this.namedLocationWordants = other.namedLocationWordants;
         this.locationType = other.locationType;
         this.explicitLocatedAt = other.explicitLocatedAt;
         this.pageViews = other.pageViews;
@@ -142,9 +145,14 @@ public class Article extends WikiEntity
         return this.locationsData;
     }
 
-    public Wordants getNamedLocationWordants()
+    public ScoredVector getWordsScoredVector()
     {
-        return this.namedLocationWordants;
+        return this.wordsScoredVector;
+    }
+
+    public ScoredVector getNamedLocationsScoredVector()
+    {
+        return this.namedLocationScoredVector;
     }
 
     public LocationType getLocationType()

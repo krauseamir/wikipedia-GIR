@@ -1,4 +1,4 @@
-package com.krause.wikigir.models.utils;
+package com.krause.wikigir.main.models.utils;
 
 import java.util.*;
 

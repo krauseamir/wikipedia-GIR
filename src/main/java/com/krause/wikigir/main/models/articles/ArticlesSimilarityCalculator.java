@@ -1,4 +1,4 @@
-package com.krause.wikigir.models.articles;
+package com.krause.wikigir.main.models.articles;
 
 import java.util.Arrays;
 

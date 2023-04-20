@@ -1,4 +1,4 @@
-package com.krause.wikigir.models.general;
+package com.krause.wikigir.main.models.general;
 
 import java.io.DataOutputStream;
 import java.io.DataInputStream;
