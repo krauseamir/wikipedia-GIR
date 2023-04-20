@@ -1,25 +1,24 @@
 package com.krause.wikigir.main.models.general;
 
-import java.io.*;
 import java.util.*;
+import java.io.*;
 
 import com.krause.wikigir.main.models.utils.BlockingThreadFixedExecutor;
+import com.krause.wikigir.main.models.articles.CleanTextXmlParser;
 import com.krause.wikigir.main.models.utils.CustomSerializable;
 import com.krause.wikigir.main.models.utils.ExceptionWrapper;
 import com.krause.wikigir.main.models.utils.StringsIdsMapper;
 import com.krause.wikigir.main.Constants;
 
 /**
- * Contains a mapping of all the words found in all wiki pages.
- * The words are english-letter (and digits) only, lowercased, without any punctuation marks, etc.
+ * Contains a mapping of all the words found in all wiki articles.
+ * The words are english-letter (and digits) only, lower-cased, without any punctuation marks, etc.
  * The dictionary contains an integer identifier for each string word (for lower memory consumption
  * when storing the dictionary), as well as the document frequency for vector-space-like IR.
- *
- * @author Amir Krause
  */
 public class Dictionary
 {
-    // 0 = scan all pages in the xml file.
+    // 0 = scan all articles in the xml file.
     private static final int PAGES_LIMIT = 0;
 
     // The singleton instance.
@@ -42,6 +41,8 @@ public class Dictionary
     private String filePath;
 
     private StringsIdsMapper wordsIdsMapping;
+
+    // Document frequencies for words, used to calculate the IDF component.
     private Map<Integer, Integer> df;
 
     private int totalDocuments;
@@ -75,7 +76,7 @@ public class Dictionary
         this.totalDocuments = 0;
         this.totalWords = 0;
 
-        this.executor = new BlockingThreadFixedExecutor(16, 1000, 100);
+        this.executor = new BlockingThreadFixedExecutor();
 
         this.created = false;
     }
@@ -140,7 +141,7 @@ public class Dictionary
         int[] counter = {0};
         int[] nextId = {1};
 
-        WikiXmlPagesExtractor.extract(CleanTextXmlParser::new,
+        WikiXmlArticlesExtractor.extract(CleanTextXmlParser::new,
             (parser, text) ->
             {
                 this.executor.execute(() ->
@@ -176,8 +177,8 @@ public class Dictionary
 
                             if(++counter[0] % 10_000 == 0)
                             {
-                                System.out.println("Passed " + counter[0] + " pages, dictionary" +
-                                                   " has " + this.df.size() + " words.");
+                                System.out.println("Passed " + counter[0] + " articles, dictionary" +
+                                                   " now contains " + this.df.size() + " words.");
                             }
                         }
                     },

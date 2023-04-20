@@ -65,7 +65,7 @@ public class InvertedIndex
     private Map<Integer, List<Pair<Integer, Float>>> workingMap;
 
     // A mapping of word ID to a list od 2-dimensional integers, where the first is the title ID and the second is the
-    // score of the word in that title's page, multiplied by 1 million (to be stored as a simple integer).
+    // score of the word in that title's article, multiplied by 1 million (to be stored as a simple integer).
     private int[][][] index;
 
     private boolean created;
@@ -184,7 +184,7 @@ public class InvertedIndex
         for(int id : ids)
         {
             // Could happen if the index is a partial index (for example, only with
-            // pages with coordinates), thus not all words / titles will appear in it.
+            // articles with coordinates), thus not all words / titles will appear in it.
             if(id >= this.index.length)
             {
                 continue;
@@ -239,7 +239,7 @@ public class InvertedIndex
         return this.created;
     }
 
-    // Creates the index using the given pages map, then creates the slimmest possible version of the index by
+    // Creates the index using the given articles map, then creates the slimmest possible version of the index by
     // transforming it into a list of integers, where the list for the word with id x is in cell x of the integers
     // array (there are empty cells for words with empty lists).
     private void createIndex(Map<String, Article> articles)
@@ -295,7 +295,7 @@ public class InvertedIndex
     }
 
     // Trims the working map (with the inverted index) into the slimmest possible version: an array
-    // of integer arrays: the integer array matching cell x is the list of title IDs in whose pages
+    // of integer arrays: the integer array matching cell x is the list of title IDs in whose articles
     // the word/category, whose ID is x, appeared.
     // Naturally, some indices have empty mappings, but it allows accessing the list in instant
     // time, given the word ID.

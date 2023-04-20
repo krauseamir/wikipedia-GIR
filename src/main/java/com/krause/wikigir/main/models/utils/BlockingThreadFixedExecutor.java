@@ -48,15 +48,6 @@ public class BlockingThreadFixedExecutor extends ThreadPoolExecutor
     }
 
     /**
-     * Creates an executor with some common default parameter values.
-     * @param threads the number of allowed threads in the fixed pool.
-     */
-    public BlockingThreadFixedExecutor(int threads)
-    {
-        this(16, 100, 1000);
-    }
-
-    /**
      * Shutdown the executor and wait for operating threads to terminate, but cap the wait time.
      */
     public void waitForTermination()

@@ -1,7 +1,8 @@
 package com.krause.wikigir.main.models.articles;
 
 import com.krause.wikigir.main.models.general.Coordinates;
-import com.krause.wikigir.main.models.general.ScoredVector;
+import com.krause.wikigir.main.models.general.ScoresVector;
+import com.krause.wikigir.main.models.general.WikiEntity;
 import com.krause.wikigir.main.models.utils.Pair;
 
 import java.util.*;
@@ -12,25 +13,26 @@ import java.util.*;
  */
 public class Article extends WikiEntity
 {
+    // If the article has been manually tagged at the title level with coordinates (on Earth...) - store them here.
     private Coordinates coordinates;
 
-    // Wikipedia entities (pages titles), whose pages had coordinates, and the number of times they or
+    // Wikipedia entities (article titles), whose articles had coordinates, and the number of times they or
     // any of their variants (as defined by wikipedia in the [[...|...]] notation) were detected. The
-    // order of appearance in the list is the order of the entities appearance in the page.
+    // order of appearance in the list is the order of the entities appearance in the article.
     // with location, it is stored as well.
     private LocationsData locationsData;
 
     // The top-k words (by their tf-idf values) in the article.
-    private ScoredVector wordsScoredVector;
+    private ScoresVector wordsScoredVector;
 
-    // The top-k named locations when sorted by their counts-then-ordinal in the page and their scores, without
+    // The top-k named locations when sorted by their counts-then-ordinal in the article and their scores, without
     // any additional modulations (such as is-a-in, located-at or country modifiers). Simply root(count/total).
-    private ScoredVector namedLocationScoredVector;
+    private ScoresVector namedLocationScoredVector;
 
-    // The assigned location type for the page (country, settlement, landmark, region, etc.) as heuristically parsed.
+    // The assigned location type for the article (country, settlement, landmark, region, etc.) as heuristically parsed.
     private LocationType locationType;
 
-    // If the page's text was detected to contain a special structure such as "located at", "located in",
+    // If the article's text was detected to contain a special structure such as "located at", "located in",
     // "headquartered at", etc., followed by a detected named location - it is stored here (and used later to
     // modulate named locations scores in the named locations entity set weights).
     private String explicitLocatedAt;
@@ -38,12 +40,12 @@ public class Article extends WikiEntity
     // Stores the automatically assigned (when parsed) category IDs of the article's categories.
     private int[] categoryIds;
 
-    // The number of page views the article had in the 12 months of 2019 (can be used to detect popular articles).
-    private int[] pageViews;
+    // The number of article views the article had in the 12 months of 2019 (can be used to detect popular articles).
+    private int[] articleViews;
 
     /**
      * Constructor.
-     * @param title the page's title.
+     * @param title the article's title.
      */
     public Article(String title)
     {
@@ -52,7 +54,7 @@ public class Article extends WikiEntity
 
     /**
      * Copy constructor.
-     * @param other the page to be copied.
+     * @param other the article to be copied.
      */
     public Article(Article other)
     {
@@ -64,7 +66,7 @@ public class Article extends WikiEntity
         this.locationsData = other.locationsData;
         this.locationType = other.locationType;
         this.explicitLocatedAt = other.explicitLocatedAt;
-        this.pageViews = other.pageViews;
+        this.articleViews = other.articleViews;
     }
 
     public String getTitle()
@@ -145,12 +147,12 @@ public class Article extends WikiEntity
         return this.locationsData;
     }
 
-    public ScoredVector getWordsScoredVector()
+    public ScoresVector getWordsScoredVector()
     {
         return this.wordsScoredVector;
     }
 
-    public ScoredVector getNamedLocationsScoredVector()
+    public ScoresVector getNamedLocationsScoredVector()
     {
         return this.namedLocationScoredVector;
     }
@@ -182,7 +184,7 @@ public class Article extends WikiEntity
     @Override
     public int hashCode()
     {
-        // Need to hash together the type of the entity, since there are mutual titles for categories and pages.
+        // Need to hash together the type of the entity, since there are mutual titles for categories and articles.
         return Objects.hash(super.title, "article");
     }
 

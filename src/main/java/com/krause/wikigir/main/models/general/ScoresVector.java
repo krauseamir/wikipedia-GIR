@@ -10,7 +10,7 @@ import java.util.*;
  * Stores ids (of words / articles) mapped to their scores, computed in some manner (e.g., word-score pairs generated
  * by the tf-idf scheme for each article, titles-scores created by the named-locations detection for each article, etc.)
  */
-public class ScoredVector
+public class ScoresVector
 {
     private int[] ids;
     private float[] scores;
@@ -20,7 +20,7 @@ public class ScoredVector
      * @param ids       the IDs, in order (the i-th ID matches the i-th score).
      * @param scores    the scores, in order (the i-th score matches the i-th ID).
      */
-    public ScoredVector(int[] ids, float[] scores)
+    public ScoresVector(int[] ids, float[] scores)
     {
         this.ids = ids;
         this.scores = scores;
