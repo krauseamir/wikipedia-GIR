@@ -15,17 +15,30 @@ public class IdsScoresVector
     private int[] ids;
     private float[] scores;
 
-    public IdsScoresVector(int[] wordIds, float[] wordScores)
+    /**
+     * Constructor.
+     * @param ids       the IDs, in order (the i-th ID matches the i-th score).
+     * @param scores    the scores, in order (the i-th score matches the i-th ID).
+     */
+    public IdsScoresVector(int[] ids, float[] scores)
     {
-        this.ids = wordIds;
-        this.scores = wordScores;
+        this.ids = ids;
+        this.scores = scores;
     }
 
+    /**
+     * Returns the IDs only.
+     * @return the IDs only.
+     */
     public int[] getIds()
     {
         return this.ids;
     }
 
+    /**
+     * Returns the scores only.
+     * @return the scores only.
+     */
     public float[] getScores()
     {
         return this.scores;
