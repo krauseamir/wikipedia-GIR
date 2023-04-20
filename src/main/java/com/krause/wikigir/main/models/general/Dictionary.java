@@ -141,7 +141,7 @@ public class Dictionary
         int[] counter = {0};
         int[] nextId = {1};
 
-        WikiXmlArticlesExtractor.extract(CleanTextXmlParser::new,
+        WikiXMLArticlesExtractor.extract(CleanTextXmlParser::new,
             (parser, text) ->
             {
                 this.executor.execute(() ->

@@ -70,7 +70,7 @@ public class ArticleTopWordsScoresVectorCreator extends ScoresVectorCreator
     {
         int[] parsed = {0};
 
-        WikiXmlArticlesExtractor.extract(CleanTextXmlParser::new,
+        WikiXMLArticlesExtractor.extract(CleanTextXmlParser::new,
                 (parser, text) ->
                         super.executor.execute(() ->
                                 ExceptionWrapper.wrap(() ->

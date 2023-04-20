@@ -1,6 +1,5 @@
-package com.krause.wikigir.main.models.categories;
+package com.krause.wikigir.main.models.categories.dataCreation;
 
-import com.krause.wikigir.dataFetch.CategoriesAPIQuerier;
 import com.krause.wikigir.main.Constants;
 import com.krause.wikigir.main.models.utils.ExceptionWrapper;
 

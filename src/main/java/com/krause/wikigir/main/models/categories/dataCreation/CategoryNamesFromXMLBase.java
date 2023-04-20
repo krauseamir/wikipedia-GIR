@@ -1,4 +1,4 @@
-package com.krause.wikigir.main.models.categories;
+package com.krause.wikigir.main.models.categories.dataCreation;
 
 import com.krause.wikigir.main.models.utils.BlockingThreadFixedExecutor;
 import com.krause.wikigir.main.models.general.XMLParser;

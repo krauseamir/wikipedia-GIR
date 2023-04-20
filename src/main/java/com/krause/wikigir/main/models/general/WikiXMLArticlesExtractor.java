@@ -14,7 +14,7 @@ import java.io.FileReader;
  * (disregarding redirects and other resources, focusing on actual articles). Each page is then parsed through a
  * designated parser (which can look for different things in each page).
  */
-public class WikiXmlArticlesExtractor
+public class WikiXMLArticlesExtractor
 {
     /**
      * Any operation that is required to be performed on an individual page is wrapped in this

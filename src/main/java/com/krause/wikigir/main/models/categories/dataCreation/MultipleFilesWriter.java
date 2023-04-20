@@ -1,4 +1,4 @@
-package com.krause.wikigir.dataFetch;
+package com.krause.wikigir.main.models.categories.dataCreation;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;

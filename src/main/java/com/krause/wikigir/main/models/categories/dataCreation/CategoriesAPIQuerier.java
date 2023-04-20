@@ -1,8 +1,6 @@
-package com.krause.wikigir.dataFetch;
+package com.krause.wikigir.main.models.categories.dataCreation;
 
 import com.krause.wikigir.main.models.utils.BlockingThreadFixedExecutor;
-import com.krause.wikigir.main.models.categories.CategoriesFromSQLFile;
-import com.krause.wikigir.main.models.categories.CategoryNamesFromXML;
 import com.krause.wikigir.main.Constants;
 
 import com.krause.wikigir.main.models.utils.ExceptionWrapper;
