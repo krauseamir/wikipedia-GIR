@@ -22,7 +22,7 @@ public class WikiXmlArticlesExtractor
      */
     public interface Operationable
     {
-        void operate(XmlParser parser, StringBuilder text) throws Exception;
+        void operate(XMLParser parser, StringBuilder text) throws Exception;
     }
 
     /**
@@ -33,7 +33,7 @@ public class WikiXmlArticlesExtractor
      *                      pages in the wikipedia xml file, or is 0, all pages will be parsed.
      * @param categories    should category pages be parsed, or not (title begins with "category:").
      */
-    public static void extract(XmlParser.XmlParserFactory factory, Operationable op,
+    public static void extract(XMLParser.XMLParserFactory factory, Operationable op,
                                int limit, boolean categories, boolean redirects)
     {
         int parsed = 0;
@@ -85,7 +85,7 @@ public class WikiXmlArticlesExtractor
      * @param op        the operation to be executed on each page.
      * @param limit     the maximal number of pages to parse (0 = all pages).
      */
-    public static void extract(XmlParser.XmlParserFactory factory, Operationable op, int limit)
+    public static void extract(XMLParser.XMLParserFactory factory, Operationable op, int limit)
     {
         extract(factory, op, limit, false, false);
     }
@@ -96,7 +96,7 @@ public class WikiXmlArticlesExtractor
      * @param op        the operation to be executed on each page.
      * @param limit     the maximal number of pages to parse (0 = all pages).
      */
-    public static void extractRedirects(XmlParser.XmlParserFactory factory, Operationable op, int limit)
+    public static void extractRedirects(XMLParser.XMLParserFactory factory, Operationable op, int limit)
     {
         extract(factory, op, limit, false, true);
     }

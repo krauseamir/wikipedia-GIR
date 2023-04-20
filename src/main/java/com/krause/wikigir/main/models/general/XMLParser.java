@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
  *
  * @author Amir Krause
  */
-public abstract class XmlParser
+public abstract class XMLParser
 {
     // The key of the title in the xml parser's result map.
     private static final String TITLE = "title";
@@ -26,7 +26,7 @@ public abstract class XmlParser
     /**
      * Constructor.
      */
-    public XmlParser()
+    public XMLParser()
     {
         this.result = new HashMap<>();
     }
@@ -73,8 +73,8 @@ public abstract class XmlParser
 
     // An abstract superclass for a factory generating an XML parser. A new parser is
     // instantiated per page, making a polypmorphic factory a necessity.
-    public interface XmlParserFactory
+    public interface XMLParserFactory
     {
-        XmlParser getParser();
+        XMLParser getParser();
     }
 }

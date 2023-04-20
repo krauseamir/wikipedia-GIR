@@ -1,6 +1,6 @@
 package com.krause.wikigir.main.models.articles;
 
-import com.krause.wikigir.main.models.general.XmlParser;
+import com.krause.wikigir.main.models.general.XMLParser;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,7 +31,7 @@ import java.io.StringReader;
  *
  * @author Amir Krause.
  */
-public class CleanTextXmlParser extends XmlParser
+public class CleanTextXmlParser extends XMLParser
 {
     // Keys of data structures stored in the result map.
     public static final String CLEAN_TEXT_KEY = "clean_text";
