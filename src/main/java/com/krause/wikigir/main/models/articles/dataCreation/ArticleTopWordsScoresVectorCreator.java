@@ -65,42 +65,42 @@ public class ArticleTopWordsScoresVectorCreator extends ScoresVectorCreator
         return this.vectorsMap;
     }
 
-    // Parses the entire enwiki.xml file to generate the mappings.
+    // Parses the entire Wikipedia XML file to generate the mappings.
     private void readFromXml()
     {
         int[] parsed = {0};
 
         WikiXMLArticlesExtractor.extract(CleanTextXmlParser::new,
-                (parser, text) ->
-                        super.executor.execute(() ->
-                                ExceptionWrapper.wrap(() ->
-                                {
-                                    parser.parse(text);
-                                    parser.addTitleToResult(text);
+            (parser, text) ->
+                super.executor.execute(() ->
+                    ExceptionWrapper.wrap(() ->
+                    {
+                        parser.parse(text);
+                        parser.addTitleToResult(text);
 
-                                    if(parser.getTitle() == null || parser.getResult().get(CleanTextXmlParser.CLEAN_TEXT_KEY) == null)
-                                    {
-                                        return;
-                                    }
+                        if(parser.getTitle() == null || parser.getResult().get(CleanTextXmlParser.CLEAN_TEXT_KEY) == null)
+                        {
+                            return;
+                        }
 
-                                    List<String> words = TextTokenizer.tokenize((String)parser.getResult().get(
-                                            CleanTextXmlParser.CLEAN_TEXT_KEY), true);
+                        List<String> words = TextTokenizer.tokenize((String)parser.getResult().get(
+                                CleanTextXmlParser.CLEAN_TEXT_KEY), true);
 
-                                    words = TextTokenizer.filterStopWords(words);
+                        words = TextTokenizer.filterStopWords(words);
 
-                                    ScoresVector scoresVector = createScoresVector(words);
+                        ScoresVector scoresVector = createScoresVector(words);
 
-                                    synchronized(ArticleTopWordsScoresVectorCreator.this)
-                                    {
-                                        this.vectorsMap.put(parser.getTitle(), scoresVector);
+                        synchronized(ArticleTopWordsScoresVectorCreator.this)
+                        {
+                            this.vectorsMap.put(parser.getTitle(), scoresVector);
 
-                                        if (++parsed[0] % 10_000 == 0)
-                                        {
-                                            System.out.println("Passed and processed " + parsed[0] + " articles.");
-                                        }
-                                    }
-                                }, ExceptionWrapper.Action.NOTIFY_LONG)
-                        ), ARTICLES_LIMIT);
+                            if (++parsed[0] % 10_000 == 0)
+                            {
+                                System.out.println("Passed and processed " + parsed[0] + " articles.");
+                            }
+                        }
+                    }, ExceptionWrapper.Action.NOTIFY_LONG)
+                ), ARTICLES_LIMIT);
 
         super.executor.waitForTermination();
     }

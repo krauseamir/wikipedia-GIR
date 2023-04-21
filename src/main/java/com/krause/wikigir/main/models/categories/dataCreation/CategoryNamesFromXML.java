@@ -9,12 +9,10 @@ import java.util.Set;
 
 /**
  * A safety measure for not missing relevant categories (not relying solely on the WikiMedia API):
- * Parse the "raw" wikipedia XML file, iterate over all pages and look for category references. Eventually, these
+ * Parse the "raw" wikipedia XML file, iterate over all articles and look for category references. Eventually, these
  * references are added to the queue in {@link CategoriesAPIQuerier}. Some of these
  * might be irrelevant/malformed category names, in which case the API will return an empty list of subcategories
  * and they will be removed from the final graph in {@link CategoryNamesGraph}.
- *
- * @author Amir Krause
  */
 public class CategoryNamesFromXML extends CategoryNamesFromXMLBase
 {
@@ -24,7 +22,7 @@ public class CategoryNamesFromXML extends CategoryNamesFromXMLBase
     public CategoryNamesFromXML() {}
 
     /**
-     * Iterates each page in the XML file, parses it and extracts the category references.
+     * Iterates each article in the XML file, parses it and extracts the category references.
      * @return a set containing all unique categories extracted.
      */
     @SuppressWarnings("unchecked")

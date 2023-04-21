@@ -15,11 +15,8 @@ import java.util.*;
 import java.io.*;
 
 /**
- * Responsible for extracting all categories from the predefined wikipedia categories SQL file
- * (a different file from the main wikipedia pages XML file), as well as extracting all categories
- * from the main XML file using a designated xml parser. A queue is formed from all of these
- * categories, and a thread pool keep invoking workers to send API requests, specified under the
- * WikiMedia API specifications, to fetch all subcategories.
+ * Creates a queue of category names (fetched from an SQL file and the Wikipedia XML file), invoking workers to send
+ * API requests, specified under the WikiMedia API specifications, to fetch all subcategories.
  *
  * The subcategories might need to be fetched in multiple iterations, if their number, per some
  * category, exceeds 500. In this case a "cmcontinue" flag is appended to the request, specifying
@@ -28,8 +25,6 @@ import java.io.*;
  *
  * The categories, along their subcategories are eventually saved to sequentially created files
  * under a predefined directory. They are parsed by the {@link CategoryNamesGraph} class.
- *
- * @author Amir Krause
  */
 public class CategoriesAPIQuerier
 {

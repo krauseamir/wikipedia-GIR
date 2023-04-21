@@ -11,8 +11,6 @@ import java.util.*;
  * Receives a body of text and tokenizes it into individual *english* words. The words are
  * lowercased and every character that is not a letter or digit is removed. Thie class
  * also contains a method to filter stop words from the result.
- *
- * @author Amir Krause
  */
 public class TextTokenizer
 {

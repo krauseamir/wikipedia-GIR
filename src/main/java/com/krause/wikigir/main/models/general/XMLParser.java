@@ -9,8 +9,6 @@ import java.util.regex.Pattern;
  * An abstract superclass for objects that take a single wiki page's text, analyze it
  * and produce some result. Also contains a title detection method which is needed by
  * most such XML parsers.
- *
- * @author Amir Krause
  */
 public abstract class XMLParser
 {
@@ -71,8 +69,8 @@ public abstract class XMLParser
         return title;
     }
 
-    // An abstract superclass for a factory generating an XML parser. A new parser is
-    // instantiated per page, making a polypmorphic factory a necessity.
+    // An abstract superclass for a factory generating an XML parser. A new parser
+    // is instantiated per page, making a polymorphic factory a necessity.
     public interface XMLParserFactory
     {
         XMLParser getParser();

@@ -1,5 +1,6 @@
 package com.krause.wikigir.main.models.general;
 
+import com.krause.wikigir.main.models.articles.dataCreation.ArticlesFactory;
 import com.krause.wikigir.main.models.utils.BlockingThreadFixedExecutor;
 import com.krause.wikigir.main.models.utils.CustomSerializable;
 import com.krause.wikigir.main.models.utils.ExceptionWrapper;
@@ -77,11 +78,6 @@ public class InvertedIndex
     {
         ExceptionWrapper.wrap(() ->
         {
-            if(!Articles.getInstance().isCreated())
-            {
-                throw new RuntimeException("Must create Articles object first (Articles.getInstance().create())");
-            }
-
             Properties p = new Properties();
             p.load(new BufferedInputStream(new FileInputStream(Constants.CONFIGURATION_FILE)));
 
@@ -122,13 +118,18 @@ public class InvertedIndex
      */
     public void create()
     {
+        if(!ArticlesFactory.getInstance().isCreated())
+        {
+            throw new RuntimeException("Must create Articles object first (ArticlesFactory.getInstance().create())");
+        }
+
         if(new File(this.folderPath + this.fileName).exists())
         {
             new Serializer().deserialize();
         }
         else
         {
-            Map<String, Article> articles = Articles.getInstance().getPages();
+            Map<String, Article> articles = ArticlesFactory.getInstance().getArticles();
 
             if(this.type == Type.WORDS_TO_ARTICLES_WITH_COORDINATES ||
                this.type == Type.CATEGORIES_TO_ARTICLES_WITH_COORDINATES ||
@@ -177,7 +178,7 @@ public class InvertedIndex
             case NAMED_LOCATIONS_TO_ARTICLES_COMPLETE:
             case NAMED_LOCATIONS_TO_ARTICLES_WITH_COORDINATES:
                 ids = a.getLocationsData().getLocations().stream().mapToInt(p ->
-                      Articles.getInstance().getTitleToIdsMapping().getID(p.v1)).toArray();
+                      ArticlesFactory.getInstance().getTitleToIdsMapping().getID(p.v1)).toArray();
         }
 
         List<int[][]> lists = new ArrayList<>();
@@ -215,10 +216,10 @@ public class InvertedIndex
             result = pruner.prune(lists);
         }
 
-        result.remove(Articles.getInstance().getTitleToIdsMapping().getID(a.getTitle()));
+        result.remove(ArticlesFactory.getInstance().getTitleToIdsMapping().getID(a.getTitle()));
 
         return result.entrySet().stream().filter(e -> e.getValue() >= minCollisionsThreshold).map(e ->
-               Articles.getInstance().getTitleToIdsMapping().getString(e.getKey())).collect(Collectors.toList());
+               ArticlesFactory.getInstance().getTitleToIdsMapping().getString(e.getKey())).collect(Collectors.toList());
     }
 
     /**
@@ -251,7 +252,7 @@ public class InvertedIndex
             Integer[] titleId = {null};
             ExceptionWrapper.wrap(() ->
             {
-                titleId[0] = Articles.getInstance().getTitleToIdsMapping().getID(e.getKey());
+                titleId[0] = ArticlesFactory.getInstance().getTitleToIdsMapping().getID(e.getKey());
                 if(titleId[0] == null)
                 {
                     throw new Exception("Missing title ID in inverted index.");
@@ -413,7 +414,7 @@ public class InvertedIndex
     public static void main(String[] args)
     {
         System.out.println("Creating articles file mapping...");
-        Articles.getInstance().create();
+        ArticlesFactory.getInstance().create();
 
         System.out.println("Creating the inverted indices...");
         System.out.println("words to articles complete");

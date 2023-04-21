@@ -95,7 +95,7 @@ public class Category extends WikiEntity
     @Override
     public int hashCode()
     {
-        // Need to hash together the type of the entity, since there are mutual titles for categories and pages.
+        // Need to hash together the type of the entity, since there are mutual titles for categories and articles.
         return Objects.hash(super.title, "category");
     }
 

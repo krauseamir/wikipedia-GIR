@@ -10,15 +10,15 @@ import java.io.FileReader;
 
 
 /**
- * Iterates sequentially over the "raw" wikipedia XML file and extracts the contents of each individual page
- * (disregarding redirects and other resources, focusing on actual articles). Each page is then parsed through a
- * designated parser (which can look for different things in each page).
+ * Iterates sequentially over the "raw" wikipedia XML file and extracts the contents of each individual article
+ * (disregarding redirects and other resources, focusing on actual articles). Each article is then parsed through
+ * a designated parser (which can look for different things in each article).
  */
 public class WikiXMLArticlesExtractor
 {
     /**
-     * Any operation that is required to be performed on an individual page is wrapped in this
-     * interface, where the parser indicates how the extraction of data from a page is done.
+     * Any operation that is required to be performed on an individual article is wrapped in this
+     * interface, where the parser indicates how the extraction of data from a article is done.
      */
     public interface Operationable
     {
@@ -26,7 +26,7 @@ public class WikiXMLArticlesExtractor
     }
 
     /**
-     * Sequentially reads the wiki XML file, extracts individual pages and applies the desired operation.
+     * Sequentially reads the wiki XML file, extracts individual articles and applies the desired operation.
      * @param factory       factory generating parsing objects (what data is to be extracted from each page).
      * @param op            the operation that should be done with each page.
      * @param limit         the maximal number of pages to parse. If this number is larger than the number of

@@ -13,8 +13,6 @@ import java.util.Properties;
  * as all the threads in the pool, are used. Basically, it allows sending thread
  * creation requests at a rapid rate and ensuring that new requests to create
  * threads will wait until a thread is available (either in pool or queue).
- *
- * @author Amir Krause.
  */
 public class BlockingThreadFixedExecutor extends ThreadPoolExecutor
 {
@@ -76,8 +74,6 @@ public class BlockingThreadFixedExecutor extends ThreadPoolExecutor
      * When a runnable cannot be accepted into either the queue or the pool (since
      * they are both full), we turn to this object (overriding the default rejection
      * mechanism) to block until the queue has more room.
-     *
-     * @author Amir Krause.
      */
     private static class BlockThenExecutePolicy implements RejectedExecutionHandler
     {

@@ -28,8 +28,6 @@ import java.io.StringReader;
  * 	<li>Removing all lines with an illegal beginning (for example "#").</li>
  * 	<li>Removing bad article starts (information before the title).</li>
  * </ol>
- *
- * @author Amir Krause.
  */
 public class CleanTextXmlParser extends XMLParser
 {

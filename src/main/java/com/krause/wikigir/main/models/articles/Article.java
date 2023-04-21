@@ -1,20 +1,20 @@
 package com.krause.wikigir.main.models.articles;
 
-import com.krause.wikigir.main.Constants;
-import com.krause.wikigir.main.models.general.Coordinates;
-import com.krause.wikigir.main.models.general.ScoresVector;
-import com.krause.wikigir.main.models.general.WikiEntity;
-import com.krause.wikigir.main.models.utils.ExceptionWrapper;
-import com.krause.wikigir.main.models.utils.Pair;
 import com.krause.wikigir.main.models.utils.StringsIdsMapper;
+import com.krause.wikigir.main.models.utils.ExceptionWrapper;
+import com.krause.wikigir.main.models.general.ScoresVector;
+import com.krause.wikigir.main.models.general.Coordinates;
+import com.krause.wikigir.main.models.general.WikiEntity;
+import com.krause.wikigir.main.models.utils.Pair;
+import com.krause.wikigir.main.Constants;
 
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.util.*;
 
 /**
- * Represents a single article with all needed data (extracted and created from multiple sources in {@link Articles}).
- * @author Amir Krause
+ * Represents a single article with all needed data (extracted and created from multiple sources in
+ * {@link com.krause.wikigir.main.models.articles.dataCreation.ArticlesFactory}).
  */
 public class Article extends WikiEntity
 {

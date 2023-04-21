@@ -1,5 +1,6 @@
 package com.krause.wikigir.main.models.categories.dataCreation;
 
+import com.krause.wikigir.main.models.articles.dataCreation.ArticlesFactory;
 import com.krause.wikigir.main.models.utils.CustomSerializable;
 import com.krause.wikigir.main.models.utils.ExceptionWrapper;
 import com.krause.wikigir.main.models.utils.Pair;
@@ -136,12 +137,12 @@ public class CategoryNamesGraph
      */
     public Map<Integer, Set<String>> getAncestors(int[] catIds, int levels)
     {
-        if(!Articles.getInstance().isCreated())
+        if(!ArticlesFactory.getInstance().isCreated())
         {
-            Articles.getInstance().create();
+            throw new RuntimeException("Must run ArticlesFactory.getInstance().create() before running getAncestors()");
         }
 
-        StringsIdsMapper idToStr = Articles.getInstance().getCategoriesIdsMapping();
+        StringsIdsMapper idToStr = ArticlesFactory.getInstance().getCategoriesIdsMapping();
 
         List<String> initialCategories = IntStream.of(catIds).boxed().map(idToStr::getString).
                 filter(Objects::nonNull).collect(Collectors.toList());

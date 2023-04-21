@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * A base class that is used by classes scanning the wikipedia XML file to extract categories.
  * Contains the definitions of the inner-workings of the {@link XMLParser} for extracting the
- * categories from each page, as well as the workers mechanism for parallel execution.
+ * categories from each article, as well as the workers mechanism for parallel execution.
  */
 public class CategoryNamesFromXMLBase
 {
@@ -57,9 +57,8 @@ public class CategoryNamesFromXMLBase
                         Matcher m = CATEGORY.matcher(sb.toString());
                         while(m.find())
                         {
-                            // The categories in the page text appear in "free text" form. For
-                            // convenience, normalize them to wikipedia link form (" " -> "_").
-                            // Also, remove anything after a "#" sign.
+                            // The categories in the article text appear in "free text" form. For convenience, normalize
+                            // them to wikipedia link form (" " -> "_"). Also, remove anything after a "#" sign.
                             String category = m.group(1).replaceAll(" ", "_");
                             if(category.contains("#"))
                             {

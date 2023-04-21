@@ -5,14 +5,15 @@ import com.krause.wikigir.main.models.general.WikiEntity;
 
 import java.io.DataOutputStream;
 import java.io.DataInputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * A utility class which holds data for a single Wikipedia category. It contains statistics about the category (total
- * number of pages, mean coordinates, average dispersion from the mean coordinates and total number of pages. It also
- * contains "article-specific" statistics: since the category's data is determined by its contained articles, this
- * information cannot rely on a tested article's base truth:
+ * number of articles, mean coordinates, average dispersion from the mean coordinates and total number of articles.
+ * It also contains "article-specific" statistics: since the category's data is determined by its contained articles,
+ * this information cannot rely on a tested article's base truth:
  * <br>
  * Suppose we want to assess the coordinates for some article a*. If this article has base truth coordinates, we cannot
  * rely on them in any way. But to compute the average coordinates, dispersion and coordinates ratios, we take a*'s
@@ -209,7 +210,7 @@ public class CategoryData
         return counter > 0 ? distance / counter : null;
     }
 
-    public static void serialize(DataOutputStream out, CategoryData category) throws Exception
+    public static void serialize(DataOutputStream out, CategoryData category) throws IOException
     {
         out.writeInt(category.totalArticles);
         out.writeInt(category.articlesWithCoordinates);
@@ -244,7 +245,7 @@ public class CategoryData
         }
     }
 
-    public static CategoryData deserialize(DataInputStream in) throws Exception
+    public static CategoryData deserialize(DataInputStream in) throws IOException
     {
         int totalArticles = in.readInt();
         int articlesWithCoordinates = in.readInt();
