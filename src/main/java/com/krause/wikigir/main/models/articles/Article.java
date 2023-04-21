@@ -1,10 +1,15 @@
 package com.krause.wikigir.main.models.articles;
 
+import com.krause.wikigir.main.Constants;
 import com.krause.wikigir.main.models.general.Coordinates;
 import com.krause.wikigir.main.models.general.ScoresVector;
 import com.krause.wikigir.main.models.general.WikiEntity;
+import com.krause.wikigir.main.models.utils.ExceptionWrapper;
 import com.krause.wikigir.main.models.utils.Pair;
+import com.krause.wikigir.main.models.utils.StringsIdsMapper;
 
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
 import java.util.*;
 
 /**
@@ -13,6 +18,14 @@ import java.util.*;
  */
 public class Article extends WikiEntity
 {
+    private static final int MAX_NAMED_LOCATIONS_PER_ARTICLE;
+    static
+    {
+        Properties p = new Properties();
+        ExceptionWrapper.wrap(() -> p.load(new BufferedInputStream(new FileInputStream(Constants.CONFIGURATION_FILE))));
+        MAX_NAMED_LOCATIONS_PER_ARTICLE = Integer.parseInt(p.getProperty("wikigir.articles.max_named_locations_per_article"));
+    }
+
     // If the article has been manually tagged at the title level with coordinates (on Earth...) - store them here.
     private Coordinates coordinates;
 
@@ -23,11 +36,11 @@ public class Article extends WikiEntity
     private LocationsData locationsData;
 
     // The top-k words (by their tf-idf values) in the article.
-    private ScoresVector wordsScoredVector;
+    private ScoresVector wordsScoresVector;
 
     // The top-k named locations when sorted by their counts-then-ordinal in the article and their scores, without
     // any additional modulations (such as is-a-in, located-at or country modifiers). Simply root(count/total).
-    private ScoresVector namedLocationScoredVector;
+    private ScoresVector namedLocationScoresVector;
 
     // The assigned location type for the article (country, settlement, landmark, region, etc.) as heuristically parsed.
     private LocationType locationType;
@@ -59,8 +72,8 @@ public class Article extends WikiEntity
     public Article(Article other)
     {
         super(other.title);
-        this.wordsScoredVector = other.wordsScoredVector;
-        this.namedLocationScoredVector = other.namedLocationScoredVector;
+        this.wordsScoresVector = other.wordsScoresVector;
+        this.namedLocationScoresVector = other.namedLocationScoresVector;
         this.coordinates = other.coordinates;
         this.categoryIds = other.categoryIds;
         this.locationsData = other.locationsData;
@@ -79,7 +92,12 @@ public class Article extends WikiEntity
         this.coordinates = coordinates;
     }
 
-    public void setLocations(LocationsData locationsData, StringsToIdsMapping titlesIdsMapping)
+    /**
+     * Given a named locations data processed for the article, set the named locations scores vector.
+     * @param locationsData     the {@link LocationsData} object computed for that article (from its textual XML data).
+     * @param titlesIdsMapper   a mapping from (article) title strings to their unique IDs.
+     */
+    public void setLocations(LocationsData locationsData, StringsIdsMapper titlesIdsMapper)
     {
         this.locationsData = locationsData;
 
@@ -89,21 +107,21 @@ public class Article extends WikiEntity
 
         for(Pair<String, Integer> namedLocation : locationsData.getLocations())
         {
-            if(titlesIdsMapping.getID(namedLocation.v1) == null)
+            if(titlesIdsMapper.getID(namedLocation.v1) == null)
             {
                 continue;
             }
 
             float score = (float)(Math.sqrt((double)namedLocation.v2 / totalOccurrences));
 
-            l.add(new Pair<>(titlesIdsMapping.getID(namedLocation.v1), score));
+            l.add(new Pair<>(titlesIdsMapper.getID(namedLocation.v1), score));
         }
 
-        if(l.size() > 20)
+        if(l.size() > MAX_NAMED_LOCATIONS_PER_ARTICLE)
         {
             l.sort(Comparator.comparingDouble(Pair::getV2));
             Collections.reverse(l);
-            l = l.subList(0, 20);
+            l = l.subList(0, MAX_NAMED_LOCATIONS_PER_ARTICLE);
         }
 
         double length = Math.sqrt(l.stream().mapToDouble(Pair::getV2).map(d -> Math.pow(d, 2)).sum());
@@ -119,7 +137,7 @@ public class Article extends WikiEntity
             scores[i] = l.get(i).v2;
         }
 
-        this.namedLocationWordants = new Wordants(ids, scores);
+        this.namedLocationScoresVector = new ScoresVector(ids, scores);
     }
 
     public void setLocationType(LocationType type)
@@ -147,14 +165,14 @@ public class Article extends WikiEntity
         return this.locationsData;
     }
 
-    public ScoresVector getWordsScoredVector()
+    public ScoresVector getWordsScoresVector()
     {
-        return this.wordsScoredVector;
+        return this.wordsScoresVector;
     }
 
     public ScoresVector getNamedLocationsScoredVector()
     {
-        return this.namedLocationScoredVector;
+        return this.namedLocationScoresVector;
     }
 
     public LocationType getLocationType()

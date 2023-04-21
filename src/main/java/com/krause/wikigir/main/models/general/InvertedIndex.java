@@ -168,7 +168,7 @@ public class InvertedIndex
         {
             case WORDS_TO_ARTICLES_COMPLETE:
             case WORDS_TO_ARTICLES_WITH_COORDINATES:
-                ids = a.getWordsScoredVector().getIds();
+                ids = a.getWordsScoresVector().getIds();
                 break;
             case CATEGORIES_TO_ARTICLES_COMPLETE:
             case CATEGORIES_TO_ARTICLES_WITH_COORDINATES:
@@ -267,8 +267,8 @@ public class InvertedIndex
             if(this.type == Type.WORDS_TO_ARTICLES_COMPLETE ||
                this.type == Type.WORDS_TO_ARTICLES_WITH_COORDINATES)
             {
-                ids = e.getValue().getWordsScoredVector().getIds();
-                scores = e.getValue().getWordsScoredVector().getScores();
+                ids = e.getValue().getWordsScoresVector().getIds();
+                scores = e.getValue().getWordsScoresVector().getScores();
             }
             else if(this.type == Type.CATEGORIES_TO_ARTICLES_COMPLETE ||
                     this.type == Type.CATEGORIES_TO_ARTICLES_WITH_COORDINATES)

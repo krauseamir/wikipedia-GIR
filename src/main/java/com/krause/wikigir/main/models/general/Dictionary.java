@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 import com.krause.wikigir.main.models.utils.BlockingThreadFixedExecutor;
-import com.krause.wikigir.main.models.articles.CleanTextXmlParser;
+import com.krause.wikigir.main.models.articles.dataCreation.CleanTextXmlParser;
 import com.krause.wikigir.main.models.utils.CustomSerializable;
 import com.krause.wikigir.main.models.utils.ExceptionWrapper;
 import com.krause.wikigir.main.models.utils.StringsIdsMapper;

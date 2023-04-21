@@ -1,4 +1,4 @@
-package com.krause.wikigir.main.models.articles;
+package com.krause.wikigir.main.models.articles.dataCreation;
 
 import com.krause.wikigir.main.models.general.*;
 import com.krause.wikigir.main.models.general.Dictionary;
