@@ -13,8 +13,7 @@ public class CategoriesFromSQLFile
 
     public CategoriesFromSQLFile()
     {
-        this.filePath = GetFromConfig.filePath("wikigir.base_path", "wikigir.categories.folder",
-                "wikigir.categories.raw_data.folder", "wikigir.categories.raw_data.sql_file_name");
+        this.filePath = GetFromConfig.filePath("wikigir.base_path", "wikigir.categories.raw_data.sql_file_name");
     }
 
     /**

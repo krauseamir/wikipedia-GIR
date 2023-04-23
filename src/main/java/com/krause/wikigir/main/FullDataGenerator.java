@@ -15,7 +15,17 @@ import com.krause.wikigir.main.models.general.Dictionary;
  *     <li>The raw enwiki XML file must be on disk (in the location specified in program.properties).</li>
  *     <li>Structures resulting from web API calls / scraping (subcategories text files, article views) will <b>not</b>
  *         be automatically created. They must either be invoked manually (via their main() methods in
- *         CategoriesAPIQuerier and ArticleViewsCreator), or these structures must be downloaded and placed on disk.</li>
+ *         CategoriesAPIQuerier and ArticleViewsCreator), or these structures must be downloaded and placed on disk.
+ *         The disk structure should be:
+ *         <br>
+ *         [base folder]
+ *         <br>
+ *         <br> - Categories
+ *         <br> -&nbsp;&nbsp;&nbsp; - Categories with Subcategories
+ *         <br> -&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [all subcategories text files]
+ *         <br>
+ *         <br> - [wiki xml file]
+ *     </li>
  *     <li>The process is very lengthy, especially the nearest neighbors creation file. It could take hours, or even
  *         days to complete. Sufficient heap memory (32GM and above) must be allocated via the -Xmx option.</li>
  * </ol>
