@@ -18,6 +18,23 @@ import java.io.*;
  */
 public class CategoriesFactory
 {
+    // The singleton object.
+    private static CategoriesFactory instance = null;
+
+    /**
+     * Singleton.
+     * @return the singleton {@link CategoriesFactory} object.
+     */
+    public static CategoriesFactory getInstance()
+    {
+        if(instance == null)
+        {
+            instance = new CategoriesFactory();
+        }
+
+        return instance;
+    }
+
     /**
      * Used to aggregate data about a single category when iterating over article's data (and collecting categories).
      */
@@ -97,7 +114,7 @@ public class CategoriesFactory
     public Map<Integer, AggregatedData> createDataFromArticles()
     {
         Map<String, Article> articles = ArticlesFactory.getInstance().getArticles();
-        StringsIdsMapper catIdsMapper = ArticlesFactory.getInstance().getCategoriesIdsMapping();
+        StringsIdsMapper catIdsMapper = ArticlesFactory.getInstance().getCategoriesIdsMapper();
 
         Map<Integer, AggregatedData> catIdsToData = new HashMap<>();
 
@@ -168,6 +185,6 @@ public class CategoriesFactory
         System.out.println("Creating articles data.");
         ArticlesFactory.getInstance().create();
         System.out.println("Creating categories data.");
-        new CategoriesFactory().create();
+        CategoriesFactory.getInstance().create();
     }
 }

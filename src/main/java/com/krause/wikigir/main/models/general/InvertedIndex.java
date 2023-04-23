@@ -172,7 +172,7 @@ public class InvertedIndex
             case NAMED_LOCATIONS_TO_ARTICLES_COMPLETE:
             case NAMED_LOCATIONS_TO_ARTICLES_WITH_COORDINATES:
                 ids = a.getLocationsData().getValidLocations().stream().mapToInt(p ->
-                      ArticlesFactory.getInstance().getTitleToIdsMapping().getID(p.v1)).toArray();
+                      ArticlesFactory.getInstance().getTitleToIdsMapper().getID(p.v1)).toArray();
         }
 
         List<int[][]> lists = new ArrayList<>();
@@ -210,10 +210,10 @@ public class InvertedIndex
             result = pruner.prune(lists);
         }
 
-        result.remove(ArticlesFactory.getInstance().getTitleToIdsMapping().getID(a.getTitle()));
+        result.remove(ArticlesFactory.getInstance().getTitleToIdsMapper().getID(a.getTitle()));
 
         return result.entrySet().stream().filter(e -> e.getValue() >= minCollisionsThreshold).map(e ->
-               ArticlesFactory.getInstance().getTitleToIdsMapping().getString(e.getKey())).collect(Collectors.toList());
+               ArticlesFactory.getInstance().getTitleToIdsMapper().getString(e.getKey())).collect(Collectors.toList());
     }
 
     /**
@@ -244,7 +244,7 @@ public class InvertedIndex
             Integer[] titleId = {null};
             ExceptionWrapper.wrap(() ->
             {
-                titleId[0] = ArticlesFactory.getInstance().getTitleToIdsMapping().getID(e.getKey());
+                titleId[0] = ArticlesFactory.getInstance().getTitleToIdsMapper().getID(e.getKey());
                 if(titleId[0] == null)
                 {
                     throw new Exception("Missing title ID in inverted index.");
@@ -402,23 +402,19 @@ public class InvertedIndex
         }
     }
 
+    public static void createAll()
+    {
+        for(Type t : Type.values())
+        {
+            InvertedIndex.getInstance(t).create();
+        }
+    }
+
     public static void main(String[] args)
     {
-        System.out.println("Creating articles file mapping...");
+        System.out.println("Creating articles file mapping if missing...");
         ArticlesFactory.getInstance().create();
 
-        System.out.println("Creating the inverted indices...");
-        System.out.println("words to articles complete");
-        InvertedIndex.getInstance(Type.WORDS_TO_ARTICLES_COMPLETE).create();
-        System.out.println("words to articles with coordinates");
-        InvertedIndex.getInstance(Type.WORDS_TO_ARTICLES_WITH_COORDINATES).create();
-        System.out.println("categories to articles complete");
-        InvertedIndex.getInstance(Type.CATEGORIES_TO_ARTICLES_COMPLETE).create();
-        System.out.println("categories to articles with coordinates");
-        InvertedIndex.getInstance(Type.CATEGORIES_TO_ARTICLES_WITH_COORDINATES).create();
-        System.out.println("named locations to articles complete");
-        InvertedIndex.getInstance(Type.NAMED_LOCATIONS_TO_ARTICLES_COMPLETE).create();
-        System.out.println("named locations to articles with coordinates");
-        InvertedIndex.getInstance(Type.NAMED_LOCATIONS_TO_ARTICLES_WITH_COORDINATES).create();
+        createAll();
     }
 }

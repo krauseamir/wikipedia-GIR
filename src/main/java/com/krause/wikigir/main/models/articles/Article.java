@@ -88,6 +88,11 @@ public class Article extends WikiEntity
         return this.title;
     }
 
+    public void setWordsScoresVector(ScoresVector vec)
+    {
+        this.wordsScoresVector = vec;
+    }
+
     public void setCoordinates(Coordinates coordinates)
     {
         this.coordinates = coordinates;

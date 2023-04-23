@@ -130,7 +130,7 @@ public class CategoryNamesGraph
             throw new RuntimeException("Must run ArticlesFactory.getInstance().create() before running getAncestors()");
         }
 
-        StringsIdsMapper idToStr = ArticlesFactory.getInstance().getCategoriesIdsMapping();
+        StringsIdsMapper idToStr = ArticlesFactory.getInstance().getCategoriesIdsMapper();
 
         List<String> initialCategories = IntStream.of(catIds).boxed().map(idToStr::getString).
                 filter(Objects::nonNull).collect(Collectors.toList());

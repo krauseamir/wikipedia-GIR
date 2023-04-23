@@ -15,7 +15,7 @@ import com.krause.wikigir.main.models.utils.*;
 public class Dictionary
 {
     // 0 = scan all articles in the xml file.
-    private static final int PAGES_LIMIT = 0;
+    private static final int ARTICLES_LIMIT = 0;
 
     // The singleton instance.
     private static Dictionary dictionary;
@@ -169,7 +169,7 @@ public class Dictionary
                     ExceptionWrapper.Action.NOTIFY_LONG);
                 });
             },
-            PAGES_LIMIT);
+            ARTICLES_LIMIT);
 
         this.executor.waitForTermination();
     }

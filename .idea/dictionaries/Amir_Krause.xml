@@ -10,6 +10,7 @@
       <w>delim</w>
       <w>delims</w>
       <w>deserializing</w>
+      <w>dhttps</w>
       <w>disambiguations</w>
       <w>disp</w>
       <w>enwiki</w>
@@ -24,10 +25,13 @@
       <w>outerloop</w>
       <w>querier</w>
       <w>resizes</w>
+      <w>sslexception</w>
+      <w>stackoverflow</w>
       <w>supercategories</w>
       <w>supercategory</w>
       <w>tokenization</w>
       <w>wikigir</w>
+      <w>wikimedia</w>
       <w>wordants</w>
     </words>
   </dictionary>

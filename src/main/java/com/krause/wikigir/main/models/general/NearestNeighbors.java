@@ -295,11 +295,11 @@ public class NearestNeighbors
     {
         // Note that all the tests for the existence of the titleID are almost redundant, since all
         // IDs should have matching title, but it is tested regardless to validate the data.
-        final StringsIdsMapper titleIdMapper = ArticlesFactory.getInstance().getTitleToIdsMapping();
+        final StringsIdsMapper titleIdMapper = ArticlesFactory.getInstance().getTitleToIdsMapper();
 
         ExceptionWrapper.wrap(() ->
         {
-            Integer titleId = ArticlesFactory.getInstance().getTitleToIdsMapping().getID(title);
+            Integer titleId = ArticlesFactory.getInstance().getTitleToIdsMapper().getID(title);
 
             if(titleId == null)
             {
@@ -362,34 +362,33 @@ public class NearestNeighbors
         return result;
     }
 
-    // Generates the nearest neighbors files for various maximal wordants and categories score weights.
-    public static void main(String[] args)
+    /**
+     * Creates the nearest neighbors file based on the processed inverted indices and articles mapping.
+     */
+    public static void createFile()
     {
-        System.out.println("Loading articles...");
         final Map<String, Article> articles = ArticlesFactory.getInstance().create();
 
-        System.out.println("Loading inverted indices...");
         InvertedIndex.getInstance(InvertedIndex.Type.WORDS_TO_ARTICLES_WITH_COORDINATES).create();
         InvertedIndex.getInstance(InvertedIndex.Type.CATEGORIES_TO_ARTICLES_WITH_COORDINATES).create();
         InvertedIndex.getInstance(InvertedIndex.Type.NAMED_LOCATIONS_TO_ARTICLES_WITH_COORDINATES).create();
 
-        System.out.println("Creating nearest neighbors mappings...");
         ExceptionWrapper.wrap(() ->
         {
             Properties p = new Properties();
             p.load(new BufferedInputStream(new FileInputStream(Constants.CONFIGURATION_FILE)));
 
             String basePath = p.getProperty("wikigir.base_path") +
-                              p.getProperty("wikigir.nearest_neighbors.folder") +
-                              p.getProperty("wikigir.nearest_neighbors.file_name");
+                    p.getProperty("wikigir.nearest_neighbors.folder") +
+                    p.getProperty("wikigir.nearest_neighbors.file_name");
 
             String weightsList = p.getProperty("wikigir.nearest_neighbors.weights");
 
             Map<String, Double> weights = parseWeights(weightsList);
 
             System.out.println("Processing - tf-idf weight = " + weights.get(TF_IDF_WEIGHT_KEY) +
-                               ", named locations weight = " + weights.get(NAMED_LOCATIONS_WEIGHT_KEY) +
-                               ", categories weight = " + weights.get(CATEGORIES_WEIGHT_KEY));
+                    ", named locations weight = " + weights.get(NAMED_LOCATIONS_WEIGHT_KEY) +
+                    ", categories weight = " + weights.get(CATEGORIES_WEIGHT_KEY));
 
             String path = filePath(basePath, weights);
 
@@ -401,5 +400,10 @@ public class NearestNeighbors
                 System.gc();
             }
         });
+    }
+
+    public static void main(String[] args)
+    {
+        createFile();
     }
 }
