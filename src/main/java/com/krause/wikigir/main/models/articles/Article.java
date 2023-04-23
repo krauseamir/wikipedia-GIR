@@ -34,7 +34,7 @@ public class Article extends WikiEntity
     // any of their variants (as defined by wikipedia in the [[...|...]] notation) were detected. The
     // order of appearance in the list is the order of the entities appearance in the article.
     // with location, it is stored as well.
-    private LocationsData locationsData;
+    private NamedLocationsInArticle locationsInArticle;
 
     // The top-k words (by their tf-idf values) in the article.
     private ScoresVector wordsScoresVector;
@@ -77,7 +77,7 @@ public class Article extends WikiEntity
         this.namedLocationScoresVector = other.namedLocationScoresVector;
         this.coordinates = other.coordinates;
         this.categoryIds = other.categoryIds;
-        this.locationsData = other.locationsData;
+        this.locationsInArticle = other.locationsInArticle;
         this.articleType = other.articleType;
         this.explicitLocatedAt = other.explicitLocatedAt;
         this.articleViews = other.articleViews;
@@ -95,18 +95,18 @@ public class Article extends WikiEntity
 
     /**
      * Given a named locations data processed for the article, set the named locations scores vector.
-     * @param locationsData     the {@link LocationsData} object computed for that article (from its textual XML data).
-     * @param titlesIdsMapper   a mapping from (article) title strings to their unique IDs.
+     * @param locationsInArticle        the {@link NamedLocationsInArticle} object computed for the article.
+     * @param titlesIdsMapper           a mapping from (article) title strings to their unique IDs.
      */
-    public void setLocations(LocationsData locationsData, StringsIdsMapper titlesIdsMapper)
+    public void setLocations(NamedLocationsInArticle locationsInArticle, StringsIdsMapper titlesIdsMapper)
     {
-        this.locationsData = locationsData;
+        this.locationsInArticle = locationsInArticle;
 
         List<Pair<Integer, Float>> l = new ArrayList<>();
 
-        int totalOccurrences = locationsData.getLocations().stream().mapToInt(x -> x.v2).sum();
+        int totalOccurrences = locationsInArticle.getValidLocations().stream().mapToInt(x -> x.v2).sum();
 
-        for(Pair<String, Integer> namedLocation : locationsData.getLocations())
+        for(Pair<String, Integer> namedLocation : locationsInArticle.getValidLocations())
         {
             if(titlesIdsMapper.getID(namedLocation.v1) == null)
             {
@@ -161,9 +161,9 @@ public class Article extends WikiEntity
         return this.coordinates;
     }
 
-    public LocationsData getLocationsData()
+    public NamedLocationsInArticle getLocationsData()
     {
-        return this.locationsData;
+        return this.locationsInArticle;
     }
 
     public ScoresVector getWordsScoresVector()

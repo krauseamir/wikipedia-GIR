@@ -5,7 +5,6 @@ import com.krause.wikigir.main.models.articles.dataCreation.CleanTextXMLParser;
 import com.krause.wikigir.main.models.general.WikiXMLArticlesExtractor;
 import com.krause.wikigir.main.models.general.TextTokenizer;
 import com.krause.wikigir.main.models.utils.*;
-import com.krause.wikigir.main.Constants;
 
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -19,7 +18,7 @@ import java.io.*;
  * {@link ArticleType} and can be decided either by using wikipedia's own annotations in an infobox, utilizing the
  * article's categories, or by using textual heuristics in {@link LocationTypeFromText}.
  */
-public class ArticlesLocationTypeCreator
+public class ArticlesTypeCreator
 {
     // 0 = all pages.
     private static final int PAGES_LIMIT = 0;
@@ -28,31 +27,24 @@ public class ArticlesLocationTypeCreator
     private static final Pattern DEATHS_CAT = Pattern.compile("\\d+s?_deaths");
     private static final Pattern PEOPLE = Pattern.compile("People_((from)|(in)|(of))");
 
-    private String filePath;
+    private final String filePath;
 
-    private Map<String, int[]> pagesToCatIds;
-    private StringsIdsMapper categoriesIdsMapper;
+    private final Map<String, int[]> pagesToCatIds;
+    private final StringsIdsMapper categoriesIdsMapper;
 
     private final Map<String, ArticleType> articlesTypeMap;
 
-    private BlockingThreadFixedExecutor executor;
+    private final BlockingThreadFixedExecutor executor;
 
     /**
      * Constructor.
      * @param pagesToCatIds         the mapping from articles to their category IDs (required for heuristics).
      * @param categoriesIdsMapper   the index mapping from category string to their matching IDs.
      */
-    public ArticlesLocationTypeCreator(Map<String, int[]> pagesToCatIds, StringsIdsMapper categoriesIdsMapper)
+    public ArticlesTypeCreator(Map<String, int[]> pagesToCatIds, StringsIdsMapper categoriesIdsMapper)
     {
-        ExceptionWrapper.wrap(() ->
-        {
-            Properties p = new Properties();
-            p.load(new BufferedInputStream(new FileInputStream(Constants.CONFIGURATION_FILE)));
-
-            this.filePath = p.getProperty("wikigir.base_path") +
-                            p.getProperty("wikigir.articles.folder") +
-                            p.getProperty("wikigir.articles.articles_type_file_name");
-        });
+        this.filePath = GetFromConfig.filePath("wikigir.base_path", "wikigir.articles.folder",
+                                               "wikigir.articles.articles_type_file_name");
 
         this.pagesToCatIds = pagesToCatIds;
         this.categoriesIdsMapper = categoriesIdsMapper;
@@ -225,14 +217,14 @@ public class ArticlesLocationTypeCreator
         @Override
         public String filePath()
         {
-            return ArticlesLocationTypeCreator.this.filePath;
+            return ArticlesTypeCreator.this.filePath;
         }
 
         @Override
         public void customSerialize(DataOutputStream out) throws IOException
         {
-            out.writeInt(ArticlesLocationTypeCreator.this.articlesTypeMap.size());
-            for(Map.Entry<String, ArticleType> e : ArticlesLocationTypeCreator.this.articlesTypeMap.entrySet())
+            out.writeInt(ArticlesTypeCreator.this.articlesTypeMap.size());
+            for(Map.Entry<String, ArticleType> e : ArticlesTypeCreator.this.articlesTypeMap.entrySet())
             {
                 out.writeUTF(e.getKey());
                 out.writeUTF(e.getValue().toString());
@@ -247,7 +239,7 @@ public class ArticlesLocationTypeCreator
             {
                 String title = in.readUTF();
                 String lt = in.readUTF();
-                ArticlesLocationTypeCreator.this.articlesTypeMap.put(title, ArticleType.valueOf(lt));
+                ArticlesTypeCreator.this.articlesTypeMap.put(title, ArticleType.valueOf(lt));
             }
         }
     }
@@ -258,7 +250,7 @@ public class ArticlesLocationTypeCreator
         Pair<Map<String, int[]>, StringsIdsMapper> p = new ArticlesCategoriesCreator().create();
 
         System.out.println("Parsing location types...");
-        return new ArticlesLocationTypeCreator(p.v1, p.v2).create();
+        return new ArticlesTypeCreator(p.v1, p.v2).create();
     }
 
     public static void main(String[] args)

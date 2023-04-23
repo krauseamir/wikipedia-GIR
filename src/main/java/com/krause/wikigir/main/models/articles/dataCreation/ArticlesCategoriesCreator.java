@@ -2,11 +2,7 @@ package com.krause.wikigir.main.models.articles.dataCreation;
 
 import com.krause.wikigir.main.models.categories.dataCreation.CategoryNamesFromXMLBase;
 import com.krause.wikigir.main.models.general.WikiXMLArticlesExtractor;
-import com.krause.wikigir.main.models.utils.CustomSerializable;
-import com.krause.wikigir.main.models.utils.StringsIdsMapper;
-import com.krause.wikigir.main.models.utils.ExceptionWrapper;
-import com.krause.wikigir.main.models.utils.Pair;
-import com.krause.wikigir.main.Constants;
+import com.krause.wikigir.main.models.utils.*;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -19,33 +15,25 @@ import java.io.*;
  */
 public class ArticlesCategoriesCreator extends CategoryNamesFromXMLBase
 {
-    private String articlesToCategoryIdsFile;
-    private String categoriesToIdsFile;
+    private final String articlesToCategoryIdsFile;
+    private final String categoriesToIdsFile;
 
-    private Map<String, int[]> articlesToCategoryIds;
-    private StringsIdsMapper categoriesToIds;
+    private final Map<String, int[]> articlesToCategoryIds;
+    private final StringsIdsMapper categoriesToIds;
 
     /**
      * Constructor.
      */
     public ArticlesCategoriesCreator()
     {
-        ExceptionWrapper.wrap(() ->
-        {
-            Properties p = new Properties();
-            p.load(new BufferedInputStream(new FileInputStream(Constants.CONFIGURATION_FILE)));
+        this.articlesToCategoryIdsFile = GetFromConfig.filePath("wikigir.base_path", "wikigir.articles.folder",
+                                                                "wikigir.articles.articles_to_categories_file_name");
 
-            this.articlesToCategoryIdsFile = p.getProperty("wikigir.base_path") +
-                                             p.getProperty("wikigir.articles.folder") +
-                                             p.getProperty("wikigir.articles.articles_to_categories_file_name");
+        this.categoriesToIdsFile = GetFromConfig.filePath("wikigir.base_path", "wikigir.categories.folder",
+                                                          "wikigir.categories.ids_file_name");
 
-            this.categoriesToIdsFile = p.getProperty("wikigir.base_path") +
-                                       p.getProperty("wikigir.categories.folder") +
-                                       p.getProperty("wikigir.categories.ids_file_name");
-
-            this.articlesToCategoryIds = new HashMap<>();
-            this.categoriesToIds = new StringsIdsMapper(this.categoriesToIdsFile);
-        });
+        this.articlesToCategoryIds = new HashMap<>();
+        this.categoriesToIds = new StringsIdsMapper(this.categoriesToIdsFile);
     }
 
     /**

@@ -1,30 +1,20 @@
 package com.krause.wikigir.main.models.categories.dataCreation;
 
-import com.krause.wikigir.main.Constants;
 import com.krause.wikigir.main.models.utils.ExceptionWrapper;
+import com.krause.wikigir.main.models.utils.GetFromConfig;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.FileInputStream;
 import java.io.FileReader;
 import java.util.*;
 
 public class CategoriesFromSQLFile
 {
-    private String filePath;
+    private final String filePath;
 
     public CategoriesFromSQLFile()
     {
-        ExceptionWrapper.wrap(() ->
-        {
-            Properties p = new Properties();
-            p.load(new BufferedInputStream(new FileInputStream(Constants.CONFIGURATION_FILE)));
-
-            this.filePath = p.getProperty("wikigir.base_path") +
-                            p.getProperty("wikigir.categories.folder") +
-                            p.getProperty("wikigir.categories.raw_data.folder") +
-                            p.getProperty("wikigir.categories.raw_data.sql_file_name");
-        });
+        this.filePath = GetFromConfig.filePath("wikigir.base_path", "wikigir.categories.folder",
+                "wikigir.categories.raw_data.folder", "wikigir.categories.raw_data.sql_file_name");
     }
 
     /**

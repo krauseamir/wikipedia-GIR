@@ -1,10 +1,7 @@
 package com.krause.wikigir.main.models.categories.dataCreation;
 
 import com.krause.wikigir.main.models.articles.dataCreation.ArticlesFactory;
-import com.krause.wikigir.main.models.utils.CustomSerializable;
-import com.krause.wikigir.main.models.utils.ExceptionWrapper;
-import com.krause.wikigir.main.models.utils.Pair;
-import com.krause.wikigir.main.models.utils.StringsIdsMapper;
+import com.krause.wikigir.main.models.utils.*;
 
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -77,27 +74,18 @@ public class CategoryNamesGraph
         }
     }
 
-    private Properties p;
-
-    private String filePath;
+    private final String filePath;
 
     // The main mapping in order to perform graph traversal 0 given a category name, get its node.
-    private Map<String, CategoryNode> namesToNodes;
+    private final Map<String, CategoryNode> namesToNodes;
 
     /**
      * Constructor.
      */
     private CategoryNamesGraph()
     {
-        ExceptionWrapper.wrap(() ->
-        {
-            this.p = new Properties();
-            p.load(new BufferedInputStream(new FileInputStream("Coordinator.properties")));
-
-            this.filePath = this.p.getProperty("wikigir.bash_path") +
-                            this.p.getProperty("wikigir.categories.folder") +
-                            this.p.getProperty("wikigir.categories.graph_file_name");
-        });
+        this.filePath = GetFromConfig.filePath("wikigir.bash_path", "wikigir.categories.folder",
+                                               "wikigir.categories.graph_file_name");
 
         this.namesToNodes = new HashMap<>();
     }
@@ -198,9 +186,8 @@ public class CategoryNamesGraph
     {
         List<Pair<String, String[]>> result = new ArrayList<>();
 
-        String dir = this.p.getProperty("wikigir.base_path") +
-                     this.p.getProperty("wikigir.categories.folder") +
-                     this.p.getProperty("wikigir.categories.web_api.text_files.folder");
+        String dir = GetFromConfig.filePath("wikigir.base_path", "wikigir.categories.folder",
+                                            "wikigir.categories.web_api.text_files.folder");
 
         String[] fileNames = Objects.requireNonNull(new File(dir).list());
 

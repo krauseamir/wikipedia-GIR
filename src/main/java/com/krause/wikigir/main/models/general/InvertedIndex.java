@@ -1,12 +1,8 @@
 package com.krause.wikigir.main.models.general;
 
 import com.krause.wikigir.main.models.articles.dataCreation.ArticlesFactory;
-import com.krause.wikigir.main.models.utils.BlockingThreadFixedExecutor;
-import com.krause.wikigir.main.models.utils.CustomSerializable;
-import com.krause.wikigir.main.models.utils.ExceptionWrapper;
 import com.krause.wikigir.main.models.articles.Article;
-import com.krause.wikigir.main.models.utils.Pair;
-import com.krause.wikigir.main.Constants;
+import com.krause.wikigir.main.models.utils.*;
 
 import java.util.stream.Collectors;
 import java.util.*;
@@ -57,13 +53,12 @@ public class InvertedIndex
      */
     public static final int FLOAT_TO_INT_TRANSFORM_COEFF = 1_000_000;
 
-    private Type type;
+    private final Type type;
 
-    private String folderPath;
-    private String fileName;
+    private final String filePath;
 
     // Used during processing to store all results conveniently. Will be trimmed and discarded at the end.
-    private Map<Integer, List<Pair<Integer, Float>>> workingMap;
+    private final Map<Integer, List<Pair<Integer, Float>>> workingMap;
 
     // A mapping of word ID to a list od 2-dimensional integers, where the first is the title ID and the second is the
     // score of the word in that title's article, multiplied by 1 million (to be stored as a simple integer).
@@ -76,39 +71,38 @@ public class InvertedIndex
      */
     public InvertedIndex(Type type)
     {
-        ExceptionWrapper.wrap(() ->
+        this.type = type;
+
+        String folder = GetFromConfig.filePath("wikigir.base_path", "wikigir.inverted_index.folder");
+        String p = null;
+
+        switch(this.type)
         {
-            Properties p = new Properties();
-            p.load(new BufferedInputStream(new FileInputStream(Constants.CONFIGURATION_FILE)));
+            case WORDS_TO_ARTICLES_COMPLETE:
+                p = folder + GetFromConfig.filePath("wikigir.inverted_index.articles_index_file");
+                break;
+            case WORDS_TO_ARTICLES_WITH_COORDINATES:
+                p = folder + GetFromConfig.filePath("wikigir.inverted_index.articles_with_coordinates_index_file");
+                break;
+            case CATEGORIES_TO_ARTICLES_COMPLETE:
+                p = folder + GetFromConfig.filePath("wikigir.inverted_index.categories_index_file_name");
+                break;
+            case CATEGORIES_TO_ARTICLES_WITH_COORDINATES:
+                p = folder + GetFromConfig.filePath("wikigir.inverted_index.categories_with_coordinates_index_file");
+                break;
+            case NAMED_LOCATIONS_TO_ARTICLES_COMPLETE:
+                p = folder + GetFromConfig.filePath("wikigir.inverted_index.named_locations_index_file");
+                break;
+            case NAMED_LOCATIONS_TO_ARTICLES_WITH_COORDINATES:
+                p = folder + GetFromConfig.filePath("wikigir.inverted_index.named_locations_with_coordinates_index_file");
+                break;
+            default:
+                throw new RuntimeException("Bad inverted index type provided.");
+        }
 
-            this.type = type;
+        this.filePath = p;
 
-            this.folderPath = p.getProperty("wikigir.base_path") + p.getProperty("wikigir.inverted_index.folder");
-
-            switch(this.type)
-            {
-                case WORDS_TO_ARTICLES_COMPLETE:
-                    this.fileName = p.getProperty("wikigir.inverted_index.articles_index_file");
-                    break;
-                case WORDS_TO_ARTICLES_WITH_COORDINATES:
-                    this.fileName = p.getProperty("wikigir.inverted_index.articles_with_coordinates_index_file");
-                    break;
-                case CATEGORIES_TO_ARTICLES_COMPLETE:
-                    this.fileName = p.getProperty("wikigir.inverted_index.categories_index_file_name");
-                    break;
-                case CATEGORIES_TO_ARTICLES_WITH_COORDINATES:
-                    this.fileName = p.getProperty("wikigir.inverted_index.categories_with_coordinates_index_file");
-                    break;
-                case NAMED_LOCATIONS_TO_ARTICLES_COMPLETE:
-                    this.fileName = p.getProperty("wikigir.inverted_index.named_locations_index_file");
-                    break;
-                case NAMED_LOCATIONS_TO_ARTICLES_WITH_COORDINATES:
-                    this.fileName = p.getProperty("wikigir.inverted_index.named_locations_with_coordinates_index_file");
-                    break;
-                default:
-                    throw new RuntimeException("Bad inverted index type provided.");
-            }
-        });
+        this.workingMap = new HashMap<>();
 
         this.created = false;
     }
@@ -123,7 +117,7 @@ public class InvertedIndex
             throw new RuntimeException("Must create Articles object first (ArticlesFactory.getInstance().create())");
         }
 
-        if(new File(this.folderPath + this.fileName).exists())
+        if(new File(this.filePath).exists())
         {
             new Serializer().deserialize();
         }
@@ -177,7 +171,7 @@ public class InvertedIndex
                 break;
             case NAMED_LOCATIONS_TO_ARTICLES_COMPLETE:
             case NAMED_LOCATIONS_TO_ARTICLES_WITH_COORDINATES:
-                ids = a.getLocationsData().getLocations().stream().mapToInt(p ->
+                ids = a.getLocationsData().getValidLocations().stream().mapToInt(p ->
                       ArticlesFactory.getInstance().getTitleToIdsMapping().getID(p.v1)).toArray();
         }
 
@@ -245,8 +239,6 @@ public class InvertedIndex
     // array (there are empty cells for words with empty lists).
     private void createIndex(Map<String, Article> articles)
     {
-        this.workingMap = new HashMap<>();
-
         for(Map.Entry<String, Article> e : articles.entrySet())
         {
             Integer[] titleId = {null};
@@ -350,7 +342,6 @@ public class InvertedIndex
         resizeIndex(finalSize, finalSize);
 
         this.workingMap.clear();
-        this.workingMap = null;
     }
 
     // Resizes the index to a given size and fills it with data for a given length.
@@ -366,7 +357,7 @@ public class InvertedIndex
         @Override
         public String filePath()
         {
-            return InvertedIndex.this.folderPath + InvertedIndex.this.fileName;
+            return InvertedIndex.this.filePath;
         }
 
         @Override

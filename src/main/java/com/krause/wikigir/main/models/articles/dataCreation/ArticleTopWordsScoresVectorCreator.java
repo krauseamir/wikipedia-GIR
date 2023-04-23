@@ -1,43 +1,37 @@
 package com.krause.wikigir.main.models.articles.dataCreation;
 
-import com.krause.wikigir.main.models.general.*;
 import com.krause.wikigir.main.models.general.Dictionary;
-import com.krause.wikigir.main.models.utils.ExceptionWrapper;
-import com.krause.wikigir.main.Constants;
-import com.krause.wikigir.main.models.utils.Pair;
+import com.krause.wikigir.main.models.general.*;
+import com.krause.wikigir.main.models.utils.*;
 
 import java.util.*;
 import java.io.*;
 
 /**
- * Parses the wiki xml file to generate pure textual tokenization and tf-idf structure (for vector-space-like IR) for
- * each article. Note that the dictionary creation must be run first (for availability of the idf).
+ * Parses the wiki xml file to generate pure textual tokenization and tf-idf structure (for vector-space-like IR)
+ * for each article. Note that the dictionary creation must be run first (for availability of the idf).
  */
-public class ArticleTopWordsScoresVectorCreator extends ScoresVectorCreator
+public class ArticleTopWordsScoresVectorCreator
 {
     // The number of articles to process (0 = all articles).
     private static final int ARTICLES_LIMIT = 0;
+
+    private final String filePath;
+    private final int maxVectorElements;
+    private final Map<String, ScoresVector> vectorsMap;
+    private final BlockingThreadFixedExecutor executor;
 
     /**
      * Constructor.
      */
     public ArticleTopWordsScoresVectorCreator()
     {
-        if(!Dictionary.getInstance().isCreated())
-        {
-            throw new RuntimeException("Dictionary must be created before articles tf-idf terms vectors are created.");
-        }
+        this.maxVectorElements = GetFromConfig.intValues("wikigir.articles.max_terms_vector_size")[0];
+        this.filePath = GetFromConfig.filePath("wikigir.base_path", "wikigir.articles.folder",
+                                               "wikigir.articles.tf_idf_vector_file_name");
 
-        ExceptionWrapper.wrap(() ->
-        {
-            Properties p = new Properties();
-            p.load(new BufferedInputStream(new FileInputStream(Constants.CONFIGURATION_FILE)));
-
-            super.maxVectorElements = Integer.parseInt(p.getProperty("wikigir.articles.max_terms_vector_size"));
-
-            super.filePath = p.getProperty("wikigir.base_path") + p.getProperty("wikigir.articles.folder") +
-                    p.getProperty("wikigir.articles.tf_idf_vector_file_name");
-        });
+        this.vectorsMap = new HashMap<>();
+        this.executor = new BlockingThreadFixedExecutor();
     }
 
     /**
@@ -46,7 +40,12 @@ public class ArticleTopWordsScoresVectorCreator extends ScoresVectorCreator
      */
     public Map<String, ScoresVector> create()
     {
-        if(!new File(super.filePath).exists())
+        if(!Dictionary.getInstance().isCreated())
+        {
+            throw new RuntimeException("Dictionary must be created before articles tf-idf terms vectors are created.");
+        }
+
+        if(!new File(this.filePath).exists())
         {
             // The dictionary is a prerequisite to get word IDs and scores.
             if(!Dictionary.getInstance().isCreated())
@@ -72,7 +71,7 @@ public class ArticleTopWordsScoresVectorCreator extends ScoresVectorCreator
 
         WikiXMLArticlesExtractor.extract(CleanTextXMLParser::new,
             (parser, text) ->
-                super.executor.execute(() ->
+                this.executor.execute(() ->
                     ExceptionWrapper.wrap(() ->
                     {
                         parser.parse(text);
@@ -102,7 +101,7 @@ public class ArticleTopWordsScoresVectorCreator extends ScoresVectorCreator
                     }, ExceptionWrapper.Action.NOTIFY_LONG)
                 ), ARTICLES_LIMIT);
 
-        super.executor.waitForTermination();
+        this.executor.waitForTermination();
     }
 
     // Creates a single article's tf-idf structure based on the tokenized words extracted from
@@ -137,12 +136,12 @@ public class ArticleTopWordsScoresVectorCreator extends ScoresVectorCreator
                     Dictionary.getInstance().logIdf(e.getKey()))));
         }
 
-        if(terms.size() > super.maxVectorElements)
+        if(terms.size() > this.maxVectorElements)
         {
             // Sort from maximal score to lowest score (need to reverse).
             terms.sort(Comparator.comparingDouble(Pair::getV2));
             Collections.reverse(terms);
-            terms = terms.subList(0, super.maxVectorElements);
+            terms = terms.subList(0, this.maxVectorElements);
         }
 
         // Sort by word id to easily compute the dot product, later.
@@ -156,12 +155,84 @@ public class ArticleTopWordsScoresVectorCreator extends ScoresVectorCreator
             wordScores[i] = terms.get(i).v2;
         }
 
-        wordScores = normalize(wordScores);
+        normalize(wordScores);
 
         // For garbage collection, the map is no longer needed.
         workingMap.clear();
 
         return new ScoresVector(wordIds, wordScores);
+    }
+
+    // Make the L2 norm of the scores vector normalized (length = 1).
+    private void normalize(float[] wordScores)
+    {
+        double norm = 0;
+        for(float score : wordScores)
+        {
+            norm += Math.pow(score, 2);
+        }
+
+        norm = (float)Math.sqrt(norm);
+
+        for(int i = 0; i < wordScores.length; i++)
+        {
+            wordScores[i] = (float)(wordScores[i] / norm);
+        }
+    }
+
+    private class Serializer implements CustomSerializable
+    {
+        @Override
+        public String filePath()
+        {
+            return ArticleTopWordsScoresVectorCreator.this.filePath;
+        }
+
+        @Override
+        public void customSerialize(DataOutputStream out) throws IOException
+        {
+            out.writeInt(ArticleTopWordsScoresVectorCreator.this.vectorsMap.size());
+            for(Map.Entry<String, ScoresVector> e : ArticleTopWordsScoresVectorCreator.this.vectorsMap.entrySet())
+            {
+                out.writeUTF(e.getKey());
+
+                out.writeInt(e.getValue().getIds().length);
+                for (int id : e.getValue().getIds())
+                {
+                    out.writeInt(id);
+                }
+
+                out.writeInt(e.getValue().getScores().length);
+                for (float score : e.getValue().getScores())
+                {
+                    out.writeFloat(score);
+                }
+            }
+        }
+
+        @Override
+        public void customDeserialize(DataInputStream in) throws IOException
+        {
+            int size = in.readInt();
+            for(int i = 0; i < size; i++)
+            {
+                String title = in.readUTF();
+
+                int[] wordIds = new int[in.readInt()];
+                for(int j = 0; j < wordIds.length; j++)
+                {
+                    wordIds[j] = in.readInt();
+                }
+
+                float[] wordScores = new float[in.readInt()];
+                for(int j = 0; j < wordScores.length; j++)
+                {
+                    wordScores[j] = in.readFloat();
+                }
+
+                ArticleTopWordsScoresVectorCreator.this.vectorsMap.put(title, new ScoresVector(wordIds, wordScores));
+            }
+        }
     }
 
     public static void main(String[] args)

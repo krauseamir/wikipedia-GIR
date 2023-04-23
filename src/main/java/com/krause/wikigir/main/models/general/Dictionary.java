@@ -3,12 +3,8 @@ package com.krause.wikigir.main.models.general;
 import java.util.*;
 import java.io.*;
 
-import com.krause.wikigir.main.models.utils.BlockingThreadFixedExecutor;
 import com.krause.wikigir.main.models.articles.dataCreation.CleanTextXMLParser;
-import com.krause.wikigir.main.models.utils.CustomSerializable;
-import com.krause.wikigir.main.models.utils.ExceptionWrapper;
-import com.krause.wikigir.main.models.utils.StringsIdsMapper;
-import com.krause.wikigir.main.Constants;
+import com.krause.wikigir.main.models.utils.*;
 
 /**
  * Contains a mapping of all the words found in all wiki articles.
@@ -38,37 +34,25 @@ public class Dictionary
         return dictionary;
     }
 
-    private String filePath;
+    private final String filePath;
 
-    private StringsIdsMapper wordsIdsMapping;
+    private final StringsIdsMapper wordsIdsMapping;
 
     // Document frequencies for words, used to calculate the IDF component.
-    private Map<Integer, Integer> df;
+    private final Map<Integer, Integer> df;
+
+    private final BlockingThreadFixedExecutor executor;
 
     private int totalDocuments;
     private long totalWords;
-
-    private BlockingThreadFixedExecutor executor;
 
     private boolean created;
 
     // Private constructor.
     private Dictionary()
     {
-        try
-        {
-            Properties p = new Properties();
-            p.load(new BufferedInputStream(new FileInputStream(Constants.CONFIGURATION_FILE)));
-
-            this.filePath = p.getProperty("wikigir.base_path") +
-                            p.getProperty("wikigir.dictionary.folder") +
-                            p.getProperty("wikigir.dictionary.file_name");
-        }
-        catch(Exception e)
-        {
-            e.printStackTrace();
-            System.exit(1);
-        }
+        this.filePath = GetFromConfig.filePath("wikigir.base_path", "wikigir.dictionary.folder",
+                                               "wikigir.dictionary.file_name");
 
         this.wordsIdsMapping = new StringsIdsMapper();
         this.df = new HashMap<>();
