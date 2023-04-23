@@ -6,14 +6,19 @@
       <w>checkmark</w>
       <w>coeff</w>
       <w>coords</w>
+      <w>delim</w>
+      <w>delims</w>
       <w>deserializing</w>
       <w>disambiguations</w>
       <w>disp</w>
+      <w>enwiki</w>
       <w>fuste</w>
       <w>infobox</w>
       <w>jaccard</w>
+      <w>lowercased</w>
       <w>microstate</w>
       <w>microstates</w>
+      <w>nlia</w>
       <w>operationable</w>
       <w>outerloop</w>
       <w>querier</w>

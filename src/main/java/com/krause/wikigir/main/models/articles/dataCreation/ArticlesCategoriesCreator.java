@@ -27,7 +27,7 @@ public class ArticlesCategoriesCreator extends CategoryNamesFromXMLBase
     public ArticlesCategoriesCreator()
     {
         this.articlesToCategoryIdsFile = GetFromConfig.filePath("wikigir.base_path", "wikigir.articles.folder",
-                                                                "wikigir.articles.articles_to_categories_file_name");
+                                                                "wikigir.articles.articles_to_categories.file_name");
 
         this.categoriesToIdsFile = GetFromConfig.filePath("wikigir.base_path", "wikigir.categories.folder",
                                                           "wikigir.categories.ids_file_name");
