@@ -3,17 +3,15 @@ package com.krause.wikigir.main.models.general;
 import java.io.DataOutputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.text.DecimalFormat;
 import java.util.Objects;
+
+import static com.krause.wikigir.main.Constants.*;
 
 /**
  * Represents coordinates in regular floating point notation (not NSWE).
  */
 public class Coordinates
 {
-    // Used just for pretty printing of values.
-    private static final DecimalFormat DF = new DecimalFormat("#.##");
-
     /**
      * Used to compactly serialize the object by simply storing its coordinates one after the other.
      * @param out the underlying output stream used.
