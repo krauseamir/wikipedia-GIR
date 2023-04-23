@@ -309,10 +309,10 @@ public class ArticlesNamedLocationsCreator
     public static void main(String[] args)
     {
         System.out.println("Creating coordinates.");
-        Pair<Map<String, Coordinates>, Set<String>> p = new ArticlesCoordinatesCreator().create();
+        Map<String, Coordinates> coordinates = new ArticlesCoordinatesCreator().create();
         System.out.println("Creating redirects.");
         Map<String, String> redirects = new ArticlesRedirectsCreator().create();
         System.out.println("Creating named locations.");
-        new ArticlesNamedLocationsCreator(p.v1, redirects).create();
+        new ArticlesNamedLocationsCreator(coordinates, redirects).create();
     }
 }

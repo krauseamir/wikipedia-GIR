@@ -55,7 +55,8 @@ public class ArticlesTypeCreator
     }
 
     /**
-     * Creates the mapping, or loads it from disk if previously created.
+     * Creates and returns the mapping, or loads it from disk if previously created.
+     * @return the mapping.
      */
     public Map<String, ArticleType> create()
     {

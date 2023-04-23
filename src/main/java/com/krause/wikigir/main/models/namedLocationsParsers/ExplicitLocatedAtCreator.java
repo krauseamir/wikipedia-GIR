@@ -1,5 +1,7 @@
 package com.krause.wikigir.main.models.namedLocationsParsers;
 
+import com.krause.wikigir.main.models.articles.dataCreation.ArticlesCoordinatesCreator;
+import com.krause.wikigir.main.models.articles.dataCreation.ArticlesRedirectsCreator;
 import com.krause.wikigir.main.models.articles.articleType.ArticlesTypeCreator;
 import com.krause.wikigir.main.models.utils.BlockingThreadFixedExecutor;
 import com.krause.wikigir.main.models.general.WikiXMLArticlesExtractor;
@@ -154,12 +156,12 @@ public class ExplicitLocatedAtCreator
     public static void main(String[] args)
     {
         System.out.println("Creating coordinates.");
-        Map<String, Coordinates> pagesWithCoordinates = new ArticlesCoordinatesCreator().create().v1;
+        Map<String, Coordinates> coordinates = new ArticlesCoordinatesCreator().create();
         System.out.println("Creating redirects.");
         Map<String, String> redirects = new ArticlesRedirectsCreator().create();
         System.out.println("Creating location types map.");
         Map<String, ArticleType> locationTypes = ArticlesTypeCreator.createObject();
         System.out.println("Creating located at.");
-        new ExplicitLocatedAtCreator(pagesWithCoordinates, locationTypes, redirects).create();
+        new ExplicitLocatedAtCreator(coordinates, locationTypes, redirects).create();
     }
 }
