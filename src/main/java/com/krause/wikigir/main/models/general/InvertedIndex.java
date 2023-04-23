@@ -281,8 +281,8 @@ public class InvertedIndex
             else if(this.type == Type.NAMED_LOCATIONS_TO_ARTICLES_COMPLETE ||
                     this.type == Type.NAMED_LOCATIONS_TO_ARTICLES_WITH_COORDINATES)
             {
-                ids = e.getValue().getNamedLocationsScoredVector().getIds();
-                scores = e.getValue().getNamedLocationsScoredVector().getScores();
+                ids = e.getValue().getNamedLocationsScoresVector().getIds();
+                scores = e.getValue().getNamedLocationsScoresVector().getScores();
             }
 
             for(int i = 0; i < ids.length; i++)

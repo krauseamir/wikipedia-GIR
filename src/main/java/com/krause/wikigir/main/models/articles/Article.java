@@ -1,5 +1,6 @@
 package com.krause.wikigir.main.models.articles;
 
+import com.krause.wikigir.main.models.articles.articleType.ArticleType;
 import com.krause.wikigir.main.models.utils.StringsIdsMapper;
 import com.krause.wikigir.main.models.utils.ExceptionWrapper;
 import com.krause.wikigir.main.models.general.ScoresVector;
@@ -43,7 +44,7 @@ public class Article extends WikiEntity
     private ScoresVector namedLocationScoresVector;
 
     // The assigned location type for the article (country, settlement, landmark, region, etc.) as heuristically parsed.
-    private LocationType locationType;
+    private ArticleType articleType;
 
     // If the article's text was detected to contain a special structure such as "located at", "located in",
     // "headquartered at", etc., followed by a detected named location - it is stored here (and used later to
@@ -77,7 +78,7 @@ public class Article extends WikiEntity
         this.coordinates = other.coordinates;
         this.categoryIds = other.categoryIds;
         this.locationsData = other.locationsData;
-        this.locationType = other.locationType;
+        this.articleType = other.articleType;
         this.explicitLocatedAt = other.explicitLocatedAt;
         this.articleViews = other.articleViews;
     }
@@ -140,9 +141,9 @@ public class Article extends WikiEntity
         this.namedLocationScoresVector = new ScoresVector(ids, scores);
     }
 
-    public void setLocationType(LocationType type)
+    public void setLocationType(ArticleType type)
     {
-        this.locationType = type;
+        this.articleType = type;
     }
 
     public void setExplicitLocatedAt(String location)
@@ -170,14 +171,14 @@ public class Article extends WikiEntity
         return this.wordsScoresVector;
     }
 
-    public ScoresVector getNamedLocationsScoredVector()
+    public ScoresVector getNamedLocationsScoresVector()
     {
         return this.namedLocationScoresVector;
     }
 
-    public LocationType getLocationType()
+    public ArticleType getLocationType()
     {
-        return this.locationType;
+        return this.articleType;
     }
 
     public String getExplicitLocatedAt()

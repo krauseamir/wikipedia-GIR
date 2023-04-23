@@ -70,7 +70,7 @@ public class ArticleTopWordsScoresVectorCreator extends ScoresVectorCreator
     {
         int[] parsed = {0};
 
-        WikiXMLArticlesExtractor.extract(CleanTextXmlParser::new,
+        WikiXMLArticlesExtractor.extract(CleanTextXMLParser::new,
             (parser, text) ->
                 super.executor.execute(() ->
                     ExceptionWrapper.wrap(() ->
@@ -78,13 +78,13 @@ public class ArticleTopWordsScoresVectorCreator extends ScoresVectorCreator
                         parser.parse(text);
                         parser.addTitleToResult(text);
 
-                        if(parser.getTitle() == null || parser.getResult().get(CleanTextXmlParser.CLEAN_TEXT_KEY) == null)
+                        if(parser.getTitle() == null || parser.getResult().get(CleanTextXMLParser.CLEAN_TEXT_KEY) == null)
                         {
                             return;
                         }
 
                         List<String> words = TextTokenizer.tokenize((String)parser.getResult().get(
-                                CleanTextXmlParser.CLEAN_TEXT_KEY), true);
+                                CleanTextXMLParser.CLEAN_TEXT_KEY), true);
 
                         words = TextTokenizer.filterStopWords(words);
 

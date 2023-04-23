@@ -116,7 +116,7 @@ public class StringsIdsMapper
         return this.idsToStrings.size();
     }
 
-    private class Serializer implements CustomSerializable
+    public class Serializer implements CustomSerializable
     {
         @Override
         public String filePath()

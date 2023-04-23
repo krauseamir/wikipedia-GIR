@@ -29,7 +29,7 @@ import java.io.StringReader;
  * 	<li>Removing bad article starts (information before the title).</li>
  * </ol>
  */
-public class CleanTextXmlParser extends XMLParser
+public class CleanTextXMLParser extends XMLParser
 {
     // Keys of data structures stored in the result map.
     public static final String CLEAN_TEXT_KEY = "clean_text";
@@ -70,7 +70,7 @@ public class CleanTextXmlParser extends XMLParser
     /**
      * Constructor.
      */
-    public CleanTextXmlParser() {}
+    public CleanTextXMLParser() {}
 
     /**
      * Parses the given xml text lines, representing an article's data.

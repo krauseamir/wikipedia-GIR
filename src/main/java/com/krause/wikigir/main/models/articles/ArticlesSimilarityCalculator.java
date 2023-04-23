@@ -34,8 +34,8 @@ public class ArticlesSimilarityCalculator
             throw new RuntimeException("Similarity score weights must sum to 1");
         }
 
-        double wordsScore = cosine(a1.getWordsWordants().getIds(), a1.getWordsWordants().getScores(),
-                                   a2.getWordsWordants().getIds(), a2.getWordsWordants().getScores());
+        double wordsScore = cosine(a1.getWordsScoresVector().getIds(), a1.getWordsScoresVector().getScores(),
+                                   a2.getWordsScoresVector().getIds(), a2.getWordsScoresVector().getScores());
 
         float[] scores1 = new float[a1.getCategoryIds().length];
         Arrays.fill(scores1, 1);
@@ -48,10 +48,12 @@ public class ArticlesSimilarityCalculator
         // Jaccard similarity index.
         double catsScore = intersect / (scores1.length + scores2.length - intersect);
 
-        double nlsScore = cosine(a1.getNamedLocationWordants().getIds(), a1.getNamedLocationWordants().getScores(),
-                                 a2.getNamedLocationWordants().getIds(), a2.getNamedLocationWordants().getScores());
+        double nlsScore = cosine(a1.getNamedLocationsScoresVector().getIds(),
+                                 a1.getNamedLocationsScoresVector().getScores(),
+                                 a2.getNamedLocationsScoresVector().getIds(),
+                                 a2.getNamedLocationsScoresVector().getScores());
 
-        return ((tfIdfWeight * wordsScore) + (catsWeight * catsScore) + (nlWeight * nlsScore)) /
+        return ((tfIdfWeight * wordsScore) + (catsWeight * catsScore) + (nlsWeight * nlsScore)) /
                 (tfIdfWeight + catsWeight + nlsWeight);
     }
 

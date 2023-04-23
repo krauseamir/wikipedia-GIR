@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.*;
 
 import com.krause.wikigir.main.models.utils.BlockingThreadFixedExecutor;
-import com.krause.wikigir.main.models.articles.dataCreation.CleanTextXmlParser;
+import com.krause.wikigir.main.models.articles.dataCreation.CleanTextXMLParser;
 import com.krause.wikigir.main.models.utils.CustomSerializable;
 import com.krause.wikigir.main.models.utils.ExceptionWrapper;
 import com.krause.wikigir.main.models.utils.StringsIdsMapper;
@@ -141,7 +141,7 @@ public class Dictionary
         int[] counter = {0};
         int[] nextId = {1};
 
-        WikiXMLArticlesExtractor.extract(CleanTextXmlParser::new,
+        WikiXMLArticlesExtractor.extract(CleanTextXMLParser::new,
             (parser, text) ->
             {
                 this.executor.execute(() ->
@@ -151,7 +151,7 @@ public class Dictionary
                         parser.parse(text);
 
                         List<String> words = TextTokenizer.tokenize((String)parser.getResult().get(
-                                                        CleanTextXmlParser.CLEAN_TEXT_KEY) , true);
+                                                        CleanTextXMLParser.CLEAN_TEXT_KEY) , true);
 
                         words = TextTokenizer.filterStopWords(words);
 
