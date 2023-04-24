@@ -8,6 +8,7 @@ import com.krause.wikigir.main.models.utils.CustomSerializable;
 import com.krause.wikigir.main.models.utils.ExceptionWrapper;
 import com.krause.wikigir.main.models.utils.GetFromConfig;
 import com.krause.wikigir.main.models.general.Coordinates;
+import com.krause.wikigir.main.Constants;
 
 import java.util.*;
 import java.io.*;
@@ -60,7 +61,9 @@ public class IsAInCreator
     @SuppressWarnings("unchecked")
     private void readFromXml()
     {
-        int[] passed = {0};
+        int[] counter = {0};
+        int[] articlesWithCoordinates = {0};
+        int[] articlesWithCoordinatesAndIsAIn = {0};
 
         WikiXMLArticlesExtractor.extract(() -> new IsAInParser(this.articlesWithCoordinates, this.redirects),
             (parser, text) ->
@@ -70,6 +73,11 @@ public class IsAInCreator
                         parser.addTitleToResult(text);
                         parser.parse(text);
 
+                        if(IsAInCreator.this.articlesWithCoordinates.get(parser.getTitle()) != null)
+                        {
+                            articlesWithCoordinates[0]++;
+                        }
+
                         List<String> locations = (List<String>)parser.getResult().get(IsAInParser.ENTITIES_KEY);
 
                         synchronized(IsAInCreator.this)
@@ -77,11 +85,16 @@ public class IsAInCreator
                             if(locations != null && !locations.isEmpty())
                             {
                                 this.mapping.put(parser.getTitle(), locations);
+
+                                if(IsAInCreator.this.articlesWithCoordinates.get(parser.getTitle()) != null)
+                                {
+                                    articlesWithCoordinatesAndIsAIn[0]++;
+                                }
                             }
 
-                            if(++passed[0] % 100_000 == 0)
+                            if(++counter[0] % Constants.GENERATION_PRINT_CHECKPOINT == 0)
                             {
-                                System.out.println("Passed " + passed[0] + " articles, found: " +
+                                System.out.println("Passed " + counter[0] + " articles, found: " +
                                                    IsAInCreator.this.mapping.size());
                             }
                         }
@@ -89,6 +102,9 @@ public class IsAInCreator
                 ), ARTICLES_LIMIT);
 
         this.executor.waitForTermination();
+
+        System.out.println("Articles with coordinates: " + articlesWithCoordinates[0] + ", articles with " +
+                           "coordinates and is-a-in structure: " + articlesWithCoordinatesAndIsAIn[0]);
     }
 
     private class Serializer implements CustomSerializable

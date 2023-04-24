@@ -35,7 +35,6 @@ public class CategoryData
     private Coordinates avgCoordinatesAllArticles;
 
     private int totalArticles;
-    private int articlesWithCoordinates;
 
     /**
      * Constructor 1 - used when creating the categories in the categories creator.
@@ -45,7 +44,6 @@ public class CategoryData
     public CategoryData(int totalArticles, Map<String, Coordinates> titlesWithCoordinates)
     {
         this.totalArticles = totalArticles;
-        this.articlesWithCoordinates = titlesWithCoordinates.size();
         calculateAveragesAndDispersions(titlesWithCoordinates);
     }
 
@@ -57,11 +55,10 @@ public class CategoryData
      * @param allArticlesDisp           category's dispersion (from average), across all articles.
      * @param avgCoordinatesAllArticles average category coordinates, without omissions.
      */
-    public CategoryData(int totalArticles, int articlesWithCoordinates, Map<String, Coordinates> avgCoordinates,
-                        Map<String, Double> dispersions, Double allArticlesDisp, Coordinates avgCoordinatesAllArticles)
+    public CategoryData(int totalArticles, Map<String, Coordinates> avgCoordinates, Map<String, Double> dispersions,
+                        Double allArticlesDisp, Coordinates avgCoordinatesAllArticles)
     {
         this.totalArticles = totalArticles;
-        this.articlesWithCoordinates = articlesWithCoordinates;
         this.avgCoordinates = avgCoordinates;
         this.dispersions = dispersions;
         this.allArticlesDispersion = allArticlesDisp;
@@ -131,7 +128,7 @@ public class CategoryData
      */
     public int articlesWithCoordinates()
     {
-        return this.articlesWithCoordinates;
+        return this.avgCoordinates.size();
     }
 
     /**
@@ -213,7 +210,6 @@ public class CategoryData
     public static void serialize(DataOutputStream out, CategoryData category) throws IOException
     {
         out.writeInt(category.totalArticles);
-        out.writeInt(category.articlesWithCoordinates);
         out.writeInt(category.avgCoordinates.size());
 
         for(Map.Entry<String, Coordinates> e : category.avgCoordinates.entrySet())
@@ -248,7 +244,6 @@ public class CategoryData
     public static CategoryData deserialize(DataInputStream in) throws IOException
     {
         int totalArticles = in.readInt();
-        int articlesWithCoordinates = in.readInt();
         int articlesMapSize = in.readInt();
         Map<String, Coordinates> avgCoordinates = new HashMap<>();
         Map<String, Double> dispersions = new HashMap<>();
@@ -266,7 +261,6 @@ public class CategoryData
 
         Double allArticlesDisp = in.readBoolean() ? in.readDouble() : null;
 
-        return new CategoryData(totalArticles, articlesWithCoordinates, avgCoordinates,
-                                dispersions, allArticlesDisp, avgCoordinatesAllArticles);
+        return new CategoryData(totalArticles, avgCoordinates, dispersions, allArticlesDisp, avgCoordinatesAllArticles);
     }
 }

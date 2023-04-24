@@ -130,7 +130,7 @@ public class InvertedIndex
                this.type == Type.NAMED_LOCATIONS_TO_ARTICLES_WITH_COORDINATES)
             {
                 articles = articles.entrySet().stream().filter(e -> e.getValue().getCoordinates() != null).
-                        collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                                         collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
             }
 
             createIndex(articles);

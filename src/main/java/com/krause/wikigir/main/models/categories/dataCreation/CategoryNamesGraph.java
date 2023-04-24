@@ -84,7 +84,7 @@ public class CategoryNamesGraph
      */
     private CategoryNamesGraph()
     {
-        this.filePath = GetFromConfig.filePath("wikigir.bash_path", "wikigir.categories.folder",
+        this.filePath = GetFromConfig.filePath("wikigir.base_path", "wikigir.categories.folder",
                                                "wikigir.categories.graph_file_name");
 
         this.namesToNodes = new HashMap<>();
@@ -102,9 +102,11 @@ public class CategoryNamesGraph
         }
         else
         {
-            List<Pair<String, String[]>> nodesToSubcategories = parseCategoriesFile();
+            List<Pair<String, String[]>> nodesToSubcategories = parseCategoriesFiles();
 
             linkCategories(nodesToSubcategories);
+
+            System.out.println("Done extracting from sub-categories files, parsing articles' XML.");
 
             new CategoryParentsFromXML(this.namesToNodes).extract();
 
@@ -133,7 +135,7 @@ public class CategoryNamesGraph
         StringsIdsMapper idToStr = ArticlesFactory.getInstance().getCategoriesIdsMapper();
 
         List<String> initialCategories = IntStream.of(catIds).boxed().map(idToStr::getString).
-                filter(Objects::nonNull).collect(Collectors.toList());
+                                         filter(Objects::nonNull).collect(Collectors.toList());
         if(initialCategories.isEmpty())
         {
             return null;
@@ -182,7 +184,7 @@ public class CategoryNamesGraph
     // Parses the raw categories files (acquired via CategoriesAPIQuerier) to produce a list of mappings from
     // categories to their subcategories. Note that the same category can appear multiple times, thus its subcategories
     // are "split", if several API requests were needed to get all of them.
-    private List<Pair<String, String[]>> parseCategoriesFile()
+    private List<Pair<String, String[]>> parseCategoriesFiles()
     {
         List<Pair<String, String[]>> result = new ArrayList<>();
 
@@ -216,8 +218,8 @@ public class CategoryNamesGraph
         return result;
     }
 
-    // The same category could be written multiple times, which happens if the sub categories could not be fetched in a
-    // single API call, but required several. Note that in these cases the sub categories are merged under the
+    // The same category could be written multiple times, which happens if the sub categories could not be fetched in
+    // a single API call, but required several. Note that in these cases the sub categories are merged under the
     // appropriate super category.
     private void linkCategories(List<Pair<String, String[]>> categoriesToSubcategories)
     {

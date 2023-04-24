@@ -1,6 +1,8 @@
 package com.krause.wikigir.main.models.categories.dataCreation;
 
+import com.krause.wikigir.main.Constants;
 import com.krause.wikigir.main.models.articles.dataCreation.ArticlesFactory;
+import com.krause.wikigir.main.models.general.Dictionary;
 import com.krause.wikigir.main.models.utils.CustomSerializable;
 import com.krause.wikigir.main.models.categories.CategoryData;
 import com.krause.wikigir.main.models.utils.StringsIdsMapper;
@@ -85,16 +87,10 @@ public class CategoriesFactory
         {
             Map<Integer, AggregatedData> data = createDataFromArticles();
 
-            int counter = 0;
             for(AggregatedData catData : data.values())
             {
                 CategoryData metadata = new CategoryData(catData.articlesCount, catData.titlesWithCoordinates);
                 this.categoriesMap.put(catData.title, metadata);
-
-                if(++counter % 100_000 == 0)
-                {
-                    System.out.println("Phase 2 - passed " + counter + " categories.");
-                }
             }
 
             new Serializer().serialize();
@@ -140,9 +136,9 @@ public class CategoriesFactory
                 catIdsToData.get(catId).articlesCount++;
             }
 
-            if(++counter % 100_000 == 0)
+            if(++counter % Constants.GENERATION_PRINT_CHECKPOINT == 0)
             {
-                System.out.println("Phase 1 - passed " + counter + " articles.");
+                System.out.println("Passed " + counter + " articles.");
             }
         }
 
@@ -182,6 +178,8 @@ public class CategoriesFactory
 
     public static void main(String[] args)
     {
+        System.out.println("Creating dictionary (or loading from disk).");
+        Dictionary.getInstance().create();
         System.out.println("Creating articles data (or loading from disk).");
         ArticlesFactory.getInstance().create();
         System.out.println("Creating categories data (or loading from disk).");

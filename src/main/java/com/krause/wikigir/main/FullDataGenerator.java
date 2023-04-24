@@ -56,14 +56,15 @@ public class FullDataGenerator
         System.out.println();
 
         startProcess("Creating categories' data:");
+        System.out.println("Categories data:");
         CategoriesFactory.getInstance().create();
+        System.out.println("Categories names graph:");
+        CategoryNamesGraph.getInstance().create();
         System.out.println();
 
         startProcess("Creating additional structures");
         System.out.println("is-a-in detection:");
         new IsAInCreator(af.getCoordinatesMapping(), af.getRedirects()).create();
-        System.out.println("categories names graph:");
-        CategoryNamesGraph.getInstance().create();
         System.out.println();
     }
 

@@ -3,15 +3,22 @@ package com.krause.wikigir.main.models.general;
 import com.krause.wikigir.main.models.articles.dataCreation.ArticlesFactory;
 import com.krause.wikigir.main.models.articles.ArticlesSimilarityCalculator;
 import com.krause.wikigir.main.models.utils.ExceptionWrapper;
-import com.krause.wikigir.main.models.utils.GetFromConfig;
 import com.krause.wikigir.main.models.utils.StringsIdsMapper;
+import com.krause.wikigir.main.models.utils.GetFromConfig;
 import com.krause.wikigir.main.models.articles.Article;
 import com.krause.wikigir.main.models.utils.Pair;
 import com.krause.wikigir.main.Constants;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.io.*;
+
+import static com.krause.wikigir.main.models.utils.ExceptionWrapper.Action.*;
+import static com.krause.wikigir.main.models.general.InvertedIndex.Type.*;
+import static com.krause.wikigir.main.Constants.*;
 
 /**
  * Calculates the nearest neighbors for all articles (articles with coordinates, whose score with the article is of
@@ -20,9 +27,9 @@ import java.io.*;
  */
 public class NearestNeighbors
 {
-    public static final String TF_IDF_WEIGHT_KEY = "tf-idf";
-    public static final String CATEGORIES_WEIGHT_KEY = "categories";
-    public static final String NAMED_LOCATIONS_WEIGHT_KEY = "named-locations";
+    private static final String TF_IDF_WEIGHT_KEY = "tf-idf";
+    private static final String NAMED_LOCATIONS_WEIGHT_KEY = "named-locations";
+    private static final String CATEGORIES_WEIGHT_KEY = "categories";
 
     private static final int GENERATION_PRINT_CHECKPOINT = 1000;
 
@@ -62,15 +69,12 @@ public class NearestNeighbors
 
                     NearestNeighbors.this.write(e.getKey(), result);
 
-                    synchronized(NearestNeighbors.this)
+                    int count = NearestNeighbors.this.count.incrementAndGet();
+                    if(count % Constants.GENERATION_PRINT_CHECKPOINT == 0)
                     {
-                        if(++NearestNeighbors.this.count % GENERATION_PRINT_CHECKPOINT == 0)
-                        {
-                            System.out.println("Passed " + NearestNeighbors.this.count + " articles.");
-                        }
+                        System.out.println("Passed " + count + " articles.");
                     }
-                }, ExceptionWrapper.Action.NOTIFY_LONG);
-
+                }, NOTIFY_LONG);
             }
         }
 
@@ -131,7 +135,7 @@ public class NearestNeighbors
         // values of k1, k2 and k3 will result in fewer - more probable candidates - but will hurt the recall and it is
         // possible to miss relevant candidates. Setting k1 = k2 = k3 = 1 will result in getting -all- possible nearest
         // neighbors, but is much more computationally intensive as the pruning is less effective. In the paper, we set
-        // the values k1 = 2, k2 = k3 = 1.
+        // the values k1 = 2, k2 = k3 = 1 (i.e., share either at least two top words, a named location, or a category).
         private Set<String> getPrunedTitles(Article a)
         {
             Collection<String> byWords = new ArrayList<>();
@@ -142,20 +146,20 @@ public class NearestNeighbors
             // articles using a property that is not used in the final scoring.
             if(NearestNeighbors.this.tfIdfScoreWeight > 0)
             {
-                InvertedIndex.Type t = InvertedIndex.Type.WORDS_TO_ARTICLES_WITH_COORDINATES;
-                byWords = InvertedIndex.getInstance(t).prune(a, this.pruner, NearestNeighbors.this.tfIdfThresh);
-            }
-
-            if(NearestNeighbors.this.categoriesScoreWeight > 0)
-            {
-                InvertedIndex.Type t = InvertedIndex.Type.CATEGORIES_TO_ARTICLES_WITH_COORDINATES;
-                byCategories = InvertedIndex.getInstance(t).prune(a, this.pruner, NearestNeighbors.this.catThresh);
+                InvertedIndex index = InvertedIndex.getInstance(WORDS_TO_ARTICLES_WITH_COORDINATES);
+                byWords = index.prune(a, this.pruner, NearestNeighbors.this.tfIdfPruningThreshold);
             }
 
             if(NearestNeighbors.this.namedLocationsScoreWeight > 0)
             {
-                InvertedIndex.Type t = InvertedIndex.Type.NAMED_LOCATIONS_TO_ARTICLES_WITH_COORDINATES;
-                byNamedLocations = InvertedIndex.getInstance(t).prune(a, this.pruner, NearestNeighbors.this.nlThresh);
+                InvertedIndex index = InvertedIndex.getInstance(NAMED_LOCATIONS_TO_ARTICLES_WITH_COORDINATES);
+                byNamedLocations = index.prune(a, this.pruner, NearestNeighbors.this.nlPruningThreshold);
+            }
+
+            if(NearestNeighbors.this.categoriesScoreWeight > 0)
+            {
+                InvertedIndex index = InvertedIndex.getInstance(CATEGORIES_TO_ARTICLES_WITH_COORDINATES);
+                byCategories = index.prune(a, this.pruner, NearestNeighbors.this.catPruningThreshold);
             }
 
             Set<String> pruned = new HashSet<>();
@@ -168,68 +172,69 @@ public class NearestNeighbors
     }
 
     // Counts the total number of articles processed, updated by the workers.
-    private int count;
+    private final AtomicInteger count;
 
-    private Map<String, Article> articles;
+    // The mapping from titles to Article objects created by ArticlesFactory.
+    private final Map<String, Article> articles;
 
     // The minimal number of top-words collisions that an articles needs in order to be considered a valid candidate
     // to be a neighbor. Collisions = the number of top-words shared by both it and the original articles.
-    private int tfIdfThresh;
-
-    // The minimal number of categories collisions that an articles needs in order to be considered a valid
-    // candidate to be a neighbor. Collisions = number of categories shared by it and the original articles.
-    private int catThresh;
+    private final int tfIdfPruningThreshold;
 
     // The minimal number of named locations collisions that an articles needs in order to be considered a valid
     // candidate to be a neighbor. Collisions = number of named locations shared by it and the original articles.
-    private int nlThresh;
+    private final int nlPruningThreshold;
+
+    // The minimal number of categories collisions that an articles needs in order to be considered a valid
+    // candidate to be a neighbor. Collisions = number of categories shared by it and the original articles.
+    private final int catPruningThreshold;
 
     // The minimal similarity score required for a neighbor to be considered valuable. Note that this value only
     // determines whether or not a neighbor is eligible to be stored and kept, but when using the nearest neighbors
     // for some article, we can filter out neighbors based on a higher minimal threshold score.
-    private double minSimilarity;
+    private final double minSimilarity;
 
     // The maximal number of neighbors -which are stored- per each article.
-    private int maxNeighborsPerArticle;
+    private final int maxNeighborsPerArticle;
 
     // Weights of the similarity component (words, named locations, categories) in the computed score. Must sum to 1.
-    private double tfIdfScoreWeight;
-    private double categoriesScoreWeight;
-    private double namedLocationsScoreWeight;
+    private final double tfIdfScoreWeight;          // In the article - alpha
+    private final double namedLocationsScoreWeight; // In the article - beta
+    private final double categoriesScoreWeight;     // In the article - gamma
 
-    private int numWorkers;
+    private final int numWorkers;
 
     // The output stream for the resulting mapping.
     private DataOutputStream out;
 
     /**
      * Constructor.
-     * @param articles  the articles map (titles to articles) as created in {@link ArticlesFactory}.
-     * @param filePath  the full (absolute) path to the file where the data is written.
+     * @param fp        the full (absolute) path to the file where the data is written.
      */
-    public NearestNeighbors(Map<String, Article> articles, String filePath, Map<String, Double> weights)
+    public NearestNeighbors(String fp, Map<String, Double> weights)
     {
-        ExceptionWrapper.wrap(() ->
+        if(!ArticlesFactory.getInstance().isCreated())
         {
-            Properties p = new Properties();
-            p.load(new BufferedInputStream(new FileInputStream(Constants.CONFIGURATION_FILE)));
+            throw new RuntimeException("Must create articles (via ArticlesFactory) before instantiating.");
+        }
 
-            this.numWorkers = Integer.parseInt(p.getProperty("wikigir.nearest_neighbors.workers"));
+        this.articles = ArticlesFactory.getInstance().getArticles();
 
-            this.tfIdfThresh = Integer.parseInt(p.getProperty("wikigir.nearest_neighbors.tf_idf_pruning_threshold"));
-            this.nlThresh = Integer.parseInt(p.getProperty("wikigir.nearest_neighbors.named_locations_pruning_threshold"));
-            this.catThresh = Integer.parseInt(p.getProperty("wikigir.nearest_neighbors.categories_pruning_threshold"));
-            this.minSimilarity = Double.parseDouble(p.getProperty("wikigir.nearest_neighbors.min_similarity"));
-            this.maxNeighborsPerArticle = Integer.parseInt(p.getProperty("wikigir.nearest_neighbors.max_neighbors"));
+        this.numWorkers = GetFromConfig.intValue("wikigir.nearest_neighbors.workers");
+        this.minSimilarity = GetFromConfig.doubleValue("wikigir.nearest_neighbors.min_similarity");
+        this.maxNeighborsPerArticle = GetFromConfig.intValue("wikigir.nearest_neighbors.max_neighbors");
 
-            this.out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(filePath)));
-        });
+        this.tfIdfPruningThreshold = GetFromConfig.intValue("wikigir.nearest_neighbors.tf_idf_pruning_threshold");
+        this.nlPruningThreshold = GetFromConfig.intValue("wikigir.nearest_neighbors.named_locations_pruning_threshold");
+        this.catPruningThreshold = GetFromConfig.intValue("wikigir.nearest_neighbors.categories_pruning_threshold");
+
+        ExceptionWrapper.wrap(() -> this.out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(fp))));
 
         this.tfIdfScoreWeight = weights.get(TF_IDF_WEIGHT_KEY);
         this.categoriesScoreWeight = weights.get(CATEGORIES_WEIGHT_KEY);
         this.namedLocationsScoreWeight = weights.get(NAMED_LOCATIONS_WEIGHT_KEY);
-        this.articles = articles;
-        this.count = 0;
+
+        this.count = new AtomicInteger(0);
     }
 
     /**
@@ -237,11 +242,6 @@ public class NearestNeighbors
      */
     public void create()
     {
-        if(!ArticlesFactory.getInstance().isCreated())
-        {
-            throw new RuntimeException("Must create articles (ArticlesFactory.getInstance().create()) first.");
-        }
-
         if(!InvertedIndex.getInstance(InvertedIndex.Type.WORDS_TO_ARTICLES_WITH_COORDINATES).isCreated() ||
            !InvertedIndex.getInstance(InvertedIndex.Type.CATEGORIES_TO_ARTICLES_WITH_COORDINATES).isCreated() ||
            !InvertedIndex.getInstance(InvertedIndex.Type.NAMED_LOCATIONS_TO_ARTICLES_WITH_COORDINATES).isCreated())
@@ -341,11 +341,13 @@ public class NearestNeighbors
     // weight, then the categories weight. The weight can be expressed as either a double value (e.g. 0.5) and as a
     // literal fraction (e.g. 1/3). We use the literal fraction to allow weight such that 1/3 + 1/3 + 1/3 = 1. The
     // weights must sum exactly to 1.
-    private static Map<String, Double> parseWeights(String weightsList)
+    private static Map<String, Double> parseWeights()
     {
         Map<String, Double> result = new HashMap<>();
 
+        String weightsList = GetFromConfig.stringValue("wikigir.nearest_neighbors.weights");
         String[] weights = weightsList.split(",");
+
         String[] keys = {TF_IDF_WEIGHT_KEY, NAMED_LOCATIONS_WEIGHT_KEY, CATEGORIES_WEIGHT_KEY};
 
         for(int i = 0; i < keys.length; i++)
@@ -370,41 +372,41 @@ public class NearestNeighbors
      */
     public static void createFile()
     {
-        final Map<String, Article> articles = ArticlesFactory.getInstance().create();
+        String folderPath = GetFromConfig.filePath("wikigir.base_path", "wikigir.nearest_neighbors.folder");
+        String basePath = folderPath + GetFromConfig.stringValue("wikigir.nearest_neighbors.file_name");
 
-        InvertedIndex.getInstance(InvertedIndex.Type.WORDS_TO_ARTICLES_WITH_COORDINATES).create();
-        InvertedIndex.getInstance(InvertedIndex.Type.CATEGORIES_TO_ARTICLES_WITH_COORDINATES).create();
-        InvertedIndex.getInstance(InvertedIndex.Type.NAMED_LOCATIONS_TO_ARTICLES_WITH_COORDINATES).create();
+        Map<String, Double> weights = parseWeights();
 
-        ExceptionWrapper.wrap(() ->
+        System.out.println("Processing - tf-idf weight = " + DF.format(weights.get(TF_IDF_WEIGHT_KEY)) +
+                           ", named locations weight = " + DF.format(weights.get(NAMED_LOCATIONS_WEIGHT_KEY)) +
+                           ", categories weight = " + DF.format(weights.get(CATEGORIES_WEIGHT_KEY)));
+
+        System.out.println("Note: checkpoints are every " + GENERATION_PRINT_CHECKPOINT + " articles (slow process).");
+
+        String completePath = filePath(basePath, weights);
+
+        if(!new File(folderPath).exists())
         {
-            String basePath = GetFromConfig.filePath("wikigir.base_path", "wikigir.nearest_neighbors.folder",
-                                                     "wikigir.nearest_neighbors.file_name");
+            ExceptionWrapper.wrap(() -> Files.createDirectories(Paths.get(folderPath)));
+        }
 
-            String weightsList = GetFromConfig.stringValue("wikigir.nearest_neighbors.weights");
-
-            Map<String, Double> weights = parseWeights(weightsList);
-
-            System.out.println("Processing - tf-idf weight = " + weights.get(TF_IDF_WEIGHT_KEY) +
-                               ", named locations weight = " + weights.get(NAMED_LOCATIONS_WEIGHT_KEY) +
-                               ", categories weight = " + weights.get(CATEGORIES_WEIGHT_KEY));
-
-            System.out.println("Note: checkpoints are every " + GENERATION_PRINT_CHECKPOINT + " articles (very slow).");
-
-            String path = filePath(basePath, weights);
-
-            // Don't accidentally delete an existing file. It has to be manually removed.
-            if(!new File(path).exists())
-            {
-                new NearestNeighbors(articles, path, weights).create();
-                // Prepare for next iteration.
-                System.gc();
-            }
-        });
+        // Don't accidentally delete an existing file. It has to be manually removed.
+        if(!new File(completePath).exists())
+        {
+            new NearestNeighbors(completePath, weights).create();
+        }
     }
 
     public static void main(String[] args)
     {
+        System.out.println("Creating (or loading from disk) the dictionary, full articles data and inverted indices.");
+        Dictionary.getInstance().create();
+        ArticlesFactory.getInstance().create();
+        InvertedIndex.getInstance(InvertedIndex.Type.WORDS_TO_ARTICLES_WITH_COORDINATES).create();
+        InvertedIndex.getInstance(InvertedIndex.Type.CATEGORIES_TO_ARTICLES_WITH_COORDINATES).create();
+        InvertedIndex.getInstance(InvertedIndex.Type.NAMED_LOCATIONS_TO_ARTICLES_WITH_COORDINATES).create();
+
+        System.out.println("Done. Creating the nearest neighbor file.");
         createFile();
     }
 }
