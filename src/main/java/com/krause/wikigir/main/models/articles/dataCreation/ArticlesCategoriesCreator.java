@@ -1,5 +1,6 @@
 package com.krause.wikigir.main.models.articles.dataCreation;
 
+import com.krause.wikigir.main.Constants;
 import com.krause.wikigir.main.models.categories.dataCreation.CategoryNamesFromXMLBase;
 import com.krause.wikigir.main.models.general.WikiXMLArticlesExtractor;
 import com.krause.wikigir.main.models.utils.*;
@@ -93,9 +94,9 @@ public class ArticlesCategoriesCreator extends CategoryNamesFromXMLBase
                         {
                             categoriesMapping.put(parser.getTitle(), (List<String>)parser.getResult().get(CATEGORIES_KEY));
 
-                            if(categoriesMapping.size() % 10_000 == 0)
+                            if(categoriesMapping.size() % Constants.GENERATION_PRINT_CHECKPOINT == 0)
                             {
-                                System.out.println("Passed " + categoriesMapping.size() + " pages.");
+                                System.out.println("Passed " + categoriesMapping.size() + " articles.");
                             }
                         }
                     }, ExceptionWrapper.Action.NOTIFY_LONG)

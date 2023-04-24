@@ -6,6 +6,7 @@ import java.util.regex.Pattern;
 import java.util.*;
 import java.io.*;
 
+import com.krause.wikigir.main.Constants;
 import com.krause.wikigir.main.models.utils.BlockingThreadFixedExecutor;
 import com.krause.wikigir.main.models.general.WikiXMLArticlesExtractor;
 import com.krause.wikigir.main.models.utils.CustomSerializable;
@@ -110,10 +111,11 @@ public class ArticlesCoordinatesCreator
                                 }
                             }
 
-                            if(++passed[0] % 10_000 == 0)
+                            if(++passed[0] % Constants.GENERATION_PRINT_CHECKPOINT == 0)
                             {
                                 System.out.println("Passed " + passed[0] + " articles, found: " +
-                                        ArticlesCoordinatesCreator.this.coordinatesMapping.size());
+                                        ArticlesCoordinatesCreator.this.coordinatesMapping.size() +
+                                        " articles with title-level coordinates.");
                             }
                         }
                     }

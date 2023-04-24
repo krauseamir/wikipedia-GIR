@@ -17,8 +17,8 @@ public class NamedLocationsInArticle
 
     // Named locations that were detected in the article past this word index are considered to be too
     // far from the start and thus much less likely to be relevant to assessing the article's location.
-    private static final int MAX_WORD_INDEX = GetFromConfig.intValues(
-            "wikigir.articles.max_word_index_for_named_locations")[0];
+    private static final int MAX_WORD_INDEX =
+            GetFromConfig.intValue("wikigir.articles.max_word_index_for_named_locations");
 
     public Map<String, Integer> wordsUpToLocation;
     private List<Pair<String, Integer>> locations;

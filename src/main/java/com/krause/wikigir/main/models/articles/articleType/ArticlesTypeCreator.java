@@ -1,5 +1,6 @@
 package com.krause.wikigir.main.models.articles.articleType;
 
+import com.krause.wikigir.main.Constants;
 import com.krause.wikigir.main.models.articles.dataCreation.ArticlesCategoriesCreator;
 import com.krause.wikigir.main.models.articles.dataCreation.CleanTextXMLParser;
 import com.krause.wikigir.main.models.general.WikiXMLArticlesExtractor;
@@ -133,7 +134,7 @@ public class ArticlesTypeCreator
                             }
                         }
 
-                        if(++parsed[0] % 10_000 == 0)
+                        if(++parsed[0] % Constants.GENERATION_PRINT_CHECKPOINT == 0)
                         {
                             System.out.println("Passed " + parsed[0] + " articles.");
                         }
@@ -249,8 +250,6 @@ public class ArticlesTypeCreator
     {
         // First, get the pages to categories mapping and the index for int-to-string translations.
         Pair<Map<String, int[]>, StringsIdsMapper> p = new ArticlesCategoriesCreator().create();
-
-        System.out.println("Parsing location types...");
         return new ArticlesTypeCreator(p.v1, p.v2).create();
     }
 

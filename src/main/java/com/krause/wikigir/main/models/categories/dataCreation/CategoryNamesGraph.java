@@ -312,7 +312,7 @@ public class CategoryNamesGraph
 
     public static void main(String[] args)
     {
-        System.out.println("creating graph...");
+        System.out.println("creating categories graph (or loading from disk).");
         new CategoryNamesGraph().create();
     }
 }

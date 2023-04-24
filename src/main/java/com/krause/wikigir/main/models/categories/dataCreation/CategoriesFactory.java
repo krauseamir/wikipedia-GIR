@@ -182,9 +182,9 @@ public class CategoriesFactory
 
     public static void main(String[] args)
     {
-        System.out.println("Creating articles data.");
+        System.out.println("Creating articles data (or loading from disk).");
         ArticlesFactory.getInstance().create();
-        System.out.println("Creating categories data.");
+        System.out.println("Creating categories data (or loading from disk).");
         CategoriesFactory.getInstance().create();
     }
 }

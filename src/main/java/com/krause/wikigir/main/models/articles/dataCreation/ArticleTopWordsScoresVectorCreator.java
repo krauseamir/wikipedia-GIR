@@ -1,5 +1,6 @@
 package com.krause.wikigir.main.models.articles.dataCreation;
 
+import com.krause.wikigir.main.Constants;
 import com.krause.wikigir.main.models.general.Dictionary;
 import com.krause.wikigir.main.models.general.*;
 import com.krause.wikigir.main.models.utils.*;
@@ -26,7 +27,7 @@ public class ArticleTopWordsScoresVectorCreator
      */
     public ArticleTopWordsScoresVectorCreator()
     {
-        this.maxVectorElements = GetFromConfig.intValues("wikigir.articles.max_terms_vector_size")[0];
+        this.maxVectorElements = GetFromConfig.intValue("wikigir.articles.max_terms_vector_size");
         this.filePath = GetFromConfig.filePath("wikigir.base_path", "wikigir.articles.folder",
                                                "wikigir.articles.tf_idf_vector_file_name");
 
@@ -93,7 +94,7 @@ public class ArticleTopWordsScoresVectorCreator
                         {
                             this.vectorsMap.put(parser.getTitle(), scoresVector);
 
-                            if (++parsed[0] % 10_000 == 0)
+                            if (++parsed[0] % Constants.GENERATION_PRINT_CHECKPOINT == 0)
                             {
                                 System.out.println("Passed and processed " + parsed[0] + " articles.");
                             }
@@ -237,9 +238,9 @@ public class ArticleTopWordsScoresVectorCreator
 
     public static void main(String[] args)
     {
-        System.out.println("Creating the dictionary.");
+        System.out.println("Creating the dictionary (or loading from disk).");
         Dictionary.getInstance().create();
-        System.out.println("Parsing articles text and creating vectors.");
+        System.out.println("Parsing articles text and creating vectors (or loading from disk).");
         new ArticleTopWordsScoresVectorCreator().create();
     }
 }

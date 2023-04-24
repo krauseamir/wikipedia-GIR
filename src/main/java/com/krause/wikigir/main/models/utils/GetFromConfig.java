@@ -5,6 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.Properties;
 
 public class GetFromConfig
@@ -33,27 +34,38 @@ public class GetFromConfig
         return path.toString();
     }
 
-    public static int[] intValues(final String... configs)
+    public static int intValue(final String config)
     {
-        int[] result = new int[configs.length];
+        int[] result = {0};
+        ExceptionWrapper.wrap(() -> result[0] = Integer.parseInt(getStringValue(config)));
+        return result[0];
+    }
 
-        ExceptionWrapper.wrap(() ->
+    public static double doubleValue(final String config)
+    {
+        double[] result = {0.0};
+        ExceptionWrapper.wrap(() -> result[0] = Double.parseDouble(getStringValue(config)));
+        return result[0];
+    }
+
+    public static String stringValue(final String config)
+    {
+        String[] result = new String[1];
+        ExceptionWrapper.wrap(() -> result[0] = getStringValue(config));
+        return result[0];
+    }
+
+    private static String getStringValue(final String config) throws IOException
+    {
+        Properties p = new Properties();
+        p.load(new BufferedInputStream(new FileInputStream(Constants.CONFIGURATION_FILE)));
+
+        String strValue = p.getProperty(config);
+        if(StringUtils.isEmpty(strValue))
         {
-            Properties p = new Properties();
-            p.load(new BufferedInputStream(new FileInputStream(Constants.CONFIGURATION_FILE)));
+            throw new RuntimeException("Invalid configuration '" + strValue + "'");
+        }
 
-            for(int i = 0; i < configs.length; i++)
-            {
-                String strValue = p.getProperty(configs[i]);
-                if(StringUtils.isEmpty(strValue))
-                {
-                    throw new RuntimeException("Invalid configuration '" + strValue + "'");
-                }
-
-                result[i] = Integer.parseInt(strValue);
-            }
-        });
-
-        return result;
+        return strValue;
     }
 }

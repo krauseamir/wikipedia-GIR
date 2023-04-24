@@ -1,5 +1,6 @@
 package com.krause.wikigir.main.models.articles.dataCreation;
 
+import com.krause.wikigir.main.Constants;
 import com.krause.wikigir.main.models.general.WikiXMLArticlesExtractor;
 import com.krause.wikigir.main.models.general.XMLParser;
 import com.krause.wikigir.main.models.utils.BlockingThreadFixedExecutor;
@@ -82,9 +83,9 @@ public class ArticlesRedirectsCreator
                                 ArticlesRedirectsCreator.this.redirectsMap.put(parser.getTitle(), redirect);
                             }
 
-                            if(++passed[0] % 10_000 == 0)
+                            if(++passed[0] % Constants.GENERATION_PRINT_CHECKPOINT == 0)
                             {
-                                System.out.println("Passed " + passed[0] + " (redirect) pages.");
+                                System.out.println("Passed " + passed[0] + " (redirect) articles.");
                             }
                         }
                     })

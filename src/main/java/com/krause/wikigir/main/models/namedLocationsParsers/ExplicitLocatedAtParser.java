@@ -1,20 +1,21 @@
 package com.krause.wikigir.main.models.namedLocationsParsers;
 
-import com.krause.wikigir.main.Constants;
-import com.krause.wikigir.main.models.articles.articleType.ArticleType;
 import com.krause.wikigir.main.models.articles.dataCreation.CleanTextXMLParser;
+import com.krause.wikigir.main.models.articles.articleType.ArticleType;
+import com.krause.wikigir.main.models.utils.ExceptionWrapper;
 import com.krause.wikigir.main.models.general.Coordinates;
 import com.krause.wikigir.main.models.general.XMLParser;
-import com.krause.wikigir.main.models.utils.ExceptionWrapper;
+import com.krause.wikigir.main.models.utils.GetFromConfig;
 import com.krause.wikigir.main.models.utils.Pair;
 import org.apache.commons.lang3.StringUtils;
+import com.krause.wikigir.main.Constants;
 
+import java.util.stream.Collectors;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
-import java.util.Properties;
-import java.util.stream.Collectors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.Properties;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -47,37 +48,22 @@ public class ExplicitLocatedAtParser extends XMLParser
     private static final Pattern ENTITY = Pattern.compile("\\[\\[(.*?)(\\||(]]))");
 
     // If the diameter of entities within the relevant full text section exceed this diameter, do not extract.
-    private static final double MAX_ENTITIES_DIAMETER;
+    private static final double MAX_ENTITIES_DIAMETER =
+            GetFromConfig.doubleValue("wikigir.articles.explicit_located_at.max_entities_diameter");
 
     // Do not consider structures which appear too far from the article's start.
-    private static final int MAX_WORDS_TILL_PHRASE;
+    private static final int MAX_WORDS_TILL_PHRASE =
+            GetFromConfig.intValue("wikigir.articles.explicit_located_at.max_words_till_phrase");
 
     // Look for named locations which appear up to this number of characters from the detected "located in" structure.
-    private static final int MAX_CHARACTERS_POST_PHRASE;
+    private static final int MAX_CHARACTERS_POST_PHRASE =
+            GetFromConfig.intValue("wikigir.articles.explicit_located_at.max_characters_post_phrase");
 
     // Note the space at phrase suffix (to be as accurate as possible).
     private static final String[] RELEVANT_PHRASES =
             {"located in ", "located at ", "located outside ", "located inside ", "located east ",
              "located west ", "located north ", "located south ", "located near ", "headquartered in ",
              "headquartered at ", "found in "};
-
-    static
-    {
-        double[] d = {0};
-        int[] i = {0, 0};
-        ExceptionWrapper.wrap(() ->
-        {
-            Properties p = new Properties();
-            p.load(new BufferedInputStream(new FileInputStream(Constants.CONFIGURATION_FILE)));
-            d[0] = Double.parseDouble(p.getProperty("wikigir.articles.explicit_located_at.max_entities_diameter"));
-            i[0] = Integer.parseInt(p.getProperty("wikigir.articles.explicit_located_at.max_words_till_phrase"));
-            i[1] = Integer.parseInt(p.getProperty("wikigir.articles.explicit_located_at.max_characters_post_phrase"));
-        });
-
-        MAX_ENTITIES_DIAMETER = d[0];
-        MAX_WORDS_TILL_PHRASE = i[0];
-        MAX_CHARACTERS_POST_PHRASE = i[1];
-    }
 
     // Detect a situation where the text is separated by a title or a new section. Since the text we look at is the
     // "clean" text, patterns of ==<title>== hae been removed from it, so we need to search for an empty line.

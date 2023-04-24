@@ -24,11 +24,11 @@ public class ArticlesContainedEntitiesParser extends XMLParser
 
     private static final Pattern WIKI_ENTITY_PATTERN = Pattern.compile("\\[\\[ *(.*?) *]]");;
 
-    private static final int MAX_INDEX_FOR_TITLE_REMOVAL = GetFromConfig.intValues(
-            "wikigir.articles.articles_to_named_locations.max_index_for_title_removal")[0];
+    private static final int MAX_INDEX_FOR_TITLE_REMOVAL = GetFromConfig.intValue(
+            "wikigir.articles.articles_to_named_locations.max_index_for_title_removal");
 
-    private static final int MAX_TITLE_LENGTH_FOR_REMOVAL = GetFromConfig.intValues(
-            "wikigir.articles.articles_to_named_locations.max_title_length_for_removal")[0];
+    private static final int MAX_TITLE_LENGTH_FOR_REMOVAL = GetFromConfig.intValue(
+            "wikigir.articles.articles_to_named_locations.max_title_length_for_removal");
 
     public ArticlesContainedEntitiesParser()
     {

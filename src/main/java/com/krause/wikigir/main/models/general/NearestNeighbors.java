@@ -3,6 +3,7 @@ package com.krause.wikigir.main.models.general;
 import com.krause.wikigir.main.models.articles.dataCreation.ArticlesFactory;
 import com.krause.wikigir.main.models.articles.ArticlesSimilarityCalculator;
 import com.krause.wikigir.main.models.utils.ExceptionWrapper;
+import com.krause.wikigir.main.models.utils.GetFromConfig;
 import com.krause.wikigir.main.models.utils.StringsIdsMapper;
 import com.krause.wikigir.main.models.articles.Article;
 import com.krause.wikigir.main.models.utils.Pair;
@@ -22,6 +23,8 @@ public class NearestNeighbors
     public static final String TF_IDF_WEIGHT_KEY = "tf-idf";
     public static final String CATEGORIES_WEIGHT_KEY = "categories";
     public static final String NAMED_LOCATIONS_WEIGHT_KEY = "named-locations";
+
+    private static final int GENERATION_PRINT_CHECKPOINT = 1000;
 
     /**
      * A worker object which receives part of the articles mapping and calculates the nearest neighbors for each
@@ -61,7 +64,7 @@ public class NearestNeighbors
 
                     synchronized(NearestNeighbors.this)
                     {
-                        if(++NearestNeighbors.this.count % 10_000 == 0)
+                        if(++NearestNeighbors.this.count % GENERATION_PRINT_CHECKPOINT == 0)
                         {
                             System.out.println("Passed " + NearestNeighbors.this.count + " articles.");
                         }
@@ -375,20 +378,18 @@ public class NearestNeighbors
 
         ExceptionWrapper.wrap(() ->
         {
-            Properties p = new Properties();
-            p.load(new BufferedInputStream(new FileInputStream(Constants.CONFIGURATION_FILE)));
+            String basePath = GetFromConfig.filePath("wikigir.base_path", "wikigir.nearest_neighbors.folder",
+                                                     "wikigir.nearest_neighbors.file_name");
 
-            String basePath = p.getProperty("wikigir.base_path") +
-                    p.getProperty("wikigir.nearest_neighbors.folder") +
-                    p.getProperty("wikigir.nearest_neighbors.file_name");
-
-            String weightsList = p.getProperty("wikigir.nearest_neighbors.weights");
+            String weightsList = GetFromConfig.stringValue("wikigir.nearest_neighbors.weights");
 
             Map<String, Double> weights = parseWeights(weightsList);
 
             System.out.println("Processing - tf-idf weight = " + weights.get(TF_IDF_WEIGHT_KEY) +
-                    ", named locations weight = " + weights.get(NAMED_LOCATIONS_WEIGHT_KEY) +
-                    ", categories weight = " + weights.get(CATEGORIES_WEIGHT_KEY));
+                               ", named locations weight = " + weights.get(NAMED_LOCATIONS_WEIGHT_KEY) +
+                               ", categories weight = " + weights.get(CATEGORIES_WEIGHT_KEY));
+
+            System.out.println("Note: checkpoints are every " + GENERATION_PRINT_CHECKPOINT + " articles (very slow).");
 
             String path = filePath(basePath, weights);
 

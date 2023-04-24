@@ -2,6 +2,7 @@ package com.krause.wikigir.main;
 
 import com.krause.wikigir.main.models.categories.dataCreation.CategoriesFactory;
 import com.krause.wikigir.main.models.articles.dataCreation.ArticlesFactory;
+import com.krause.wikigir.main.models.categories.dataCreation.CategoryNamesGraph;
 import com.krause.wikigir.main.models.namedLocationsParsers.IsAInCreator;
 import com.krause.wikigir.main.models.general.NearestNeighbors;
 import com.krause.wikigir.main.models.general.InvertedIndex;
@@ -27,36 +28,58 @@ import com.krause.wikigir.main.models.general.Dictionary;
  *         <br> - [wiki xml file]
  *     </li>
  *     <li>The process is very lengthy, especially the nearest neighbors creation file. It could take hours, or even
- *         days to complete. Sufficient heap memory (32GM and above) must be allocated via the -Xmx option.</li>
+ *         days to complete. Sufficient heap memory (32GB and above) must be allocated via the -Xmx option. In the
+ *         tests we ran, we allocated 58GB.</li>
  * </ol>
  */
 public class FullDataGenerator
 {
+    private static long startTime = 0;
+
     public static void main(String[] args)
     {
-        printTitle("Creating dictionary:");
+        startProcess("Creating dictionary:");
         Dictionary.getInstance().create();
+        System.out.println();
 
-        printTitle("Creating inverted indices:");
-        InvertedIndex.createAll();
-
-        printTitle("Creating articles' data:");
+        startProcess("Creating articles' data:");
         ArticlesFactory af = ArticlesFactory.getInstance();
         af.create();
+        System.out.println();
 
-        printTitle("Creating nearest neighbors:");
+        startProcess("Creating inverted indices:");
+        InvertedIndex.createAll();
+        System.out.println();
+
+        startProcess("Creating nearest neighbors:");
         NearestNeighbors.createFile();
+        System.out.println();
 
-        printTitle("Creating categories' data:");
+        startProcess("Creating categories' data:");
         CategoriesFactory.getInstance().create();
+        System.out.println();
 
-        printTitle("Creating additional structures");
+        startProcess("Creating additional structures");
+        System.out.println("is-a-in detection:");
         new IsAInCreator(af.getCoordinatesMapping(), af.getRedirects()).create();
+        System.out.println("categories names graph:");
+        CategoryNamesGraph.getInstance().create();
+        System.out.println();
     }
 
-    private static void printTitle(String s)
+    private static void startProcess(String s)
     {
         System.out.println(s);
         System.out.println("================================================================================");
+        System.out.println();
+
+        startTime = System.currentTimeMillis();
+    }
+
+    private static void endProcess()
+    {
+        System.out.println();
+        double seconds = ((System.currentTimeMillis() - startTime) / 1000.0);
+        System.out.println("Completed in " + Constants.DF.format(seconds) + " seconds.");
     }
 }

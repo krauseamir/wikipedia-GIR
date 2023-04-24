@@ -1,5 +1,6 @@
 package com.krause.wikigir.main.models.articles.dataCreation;
 
+import com.krause.wikigir.main.Constants;
 import com.krause.wikigir.main.models.general.WikiXMLArticlesExtractor;
 import com.krause.wikigir.main.models.articles.NamedLocationsInArticle;
 import com.krause.wikigir.main.models.general.Coordinates;
@@ -90,7 +91,7 @@ public class ArticlesNamedLocationsCreator
 
                             this.titlesToLocationEntities.put(parser.getTitle(), nlia);
 
-                            if(++parsed[0] % 100_000 == 0)
+                            if(++parsed[0] % Constants.GENERATION_PRINT_CHECKPOINT == 0)
                             {
                                 System.out.println("Passed " + parsed[0] + " articles.");
                             }
@@ -308,11 +309,11 @@ public class ArticlesNamedLocationsCreator
 
     public static void main(String[] args)
     {
-        System.out.println("Creating coordinates.");
+        System.out.println("Creating coordinates mapping (or loading from disk).");
         Map<String, Coordinates> coordinates = new ArticlesCoordinatesCreator().create();
-        System.out.println("Creating redirects.");
+        System.out.println("Creating redirects mapping (or loading from disk).");
         Map<String, String> redirects = new ArticlesRedirectsCreator().create();
-        System.out.println("Creating named locations.");
+        System.out.println("Creating named locations (or loading from disk).");
         new ArticlesNamedLocationsCreator(coordinates, redirects).create();
     }
 }

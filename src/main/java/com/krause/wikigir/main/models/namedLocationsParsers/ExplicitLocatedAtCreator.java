@@ -1,5 +1,6 @@
 package com.krause.wikigir.main.models.namedLocationsParsers;
 
+import com.krause.wikigir.main.Constants;
 import com.krause.wikigir.main.models.articles.dataCreation.ArticlesCoordinatesCreator;
 import com.krause.wikigir.main.models.articles.dataCreation.ArticlesRedirectsCreator;
 import com.krause.wikigir.main.models.articles.articleType.ArticlesTypeCreator;
@@ -88,15 +89,22 @@ public class ExplicitLocatedAtCreator
     private void readFromXml()
     {
         int[] passed = {0};
+        int[] articleHasCoordinates = {0};
+        int[] articleHasCoordinatesAndLocatedAt = {0};
 
-        WikiXMLArticlesExtractor.extract(() -> new ExplicitLocatedAtParser(this.articlesWithCoordinates,
-                                                                           this.articlesTypesMap, this.redirects),
+        WikiXMLArticlesExtractor.extract(
+            () -> new ExplicitLocatedAtParser(this.articlesWithCoordinates, this.articlesTypesMap, this.redirects),
             (parser, text) ->
                 this.executor.execute(() ->
                     ExceptionWrapper.wrap(() ->
                     {
                         parser.addTitleToResult(text);
                         parser.parse(text);
+
+                        if(ExplicitLocatedAtCreator.this.articlesWithCoordinates.get(parser.getTitle()) != null)
+                        {
+                            articleHasCoordinates[0]++;
+                        }
 
                         String location = (String)parser.getResult().get(ExplicitLocatedAtParser.LOCATION_KEY);
 
@@ -105,12 +113,18 @@ public class ExplicitLocatedAtCreator
                             if(location != null)
                             {
                                 this.locatedAtMapping.put(parser.getTitle(), location);
+
+                                if(ExplicitLocatedAtCreator.this.articlesWithCoordinates.get(parser.getTitle()) != null)
+                                {
+                                    articleHasCoordinatesAndLocatedAt[0]++;
+                                }
                             }
 
-                            if(++passed[0] % 10_000 == 0)
+                            if(++passed[0] % Constants.GENERATION_PRINT_CHECKPOINT == 0)
                             {
-                                System.out.println("Passed " + passed[0] + " pages, found: " +
-                                        ExplicitLocatedAtCreator.this.locatedAtMapping.size());
+                                System.out.println("Passed " + passed[0] + " articles, found: " +
+                                        ExplicitLocatedAtCreator.this.locatedAtMapping.size() +
+                                        " articles with explicit located-at.");
                             }
                         }
                     }, ExceptionWrapper.Action.NOTIFY_LONG)
@@ -118,7 +132,9 @@ public class ExplicitLocatedAtCreator
 
         this.executor.waitForTermination();
 
-        System.out.println("Found " + this.locatedAtMapping.size() + " pages with 'located in/at'.");
+        System.out.println("Found " + this.locatedAtMapping.size() + " articles with 'located in/at'.");
+        System.out.println("Out of the " + articleHasCoordinates[0] + " articles with coordinates, " +
+                            articleHasCoordinatesAndLocatedAt[0] + " have a 'located at' structure.");
     }
 
     private class Serializer implements CustomSerializable
@@ -155,13 +171,14 @@ public class ExplicitLocatedAtCreator
 
     public static void main(String[] args)
     {
-        System.out.println("Creating coordinates.");
+        System.out.println("Creating coordinates mapping (or loading from disk).");
         Map<String, Coordinates> coordinates = new ArticlesCoordinatesCreator().create();
-        System.out.println("Creating redirects.");
+        System.out.println("Creating redirects mapping (or loading from disk).");
         Map<String, String> redirects = new ArticlesRedirectsCreator().create();
-        System.out.println("Creating location types map.");
-        Map<String, ArticleType> locationTypes = ArticlesTypeCreator.createObject();
-        System.out.println("Creating located at.");
-        new ExplicitLocatedAtCreator(coordinates, locationTypes, redirects).create();
+        System.out.println("Creating article types mapping (or loading from disk).");
+        Map<String, ArticleType> articlesTypes = ArticlesTypeCreator.createObject();
+        System.out.println("Creating located at mapping (or loading from disk).");
+        int howMany = new ExplicitLocatedAtCreator(coordinates, articlesTypes, redirects).create().size();
+        System.out.println("Created. Found " + howMany + " articles with \"located at\" structure.");
     }
 }

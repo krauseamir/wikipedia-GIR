@@ -74,8 +74,8 @@ public class InvertedIndex
         this.type = type;
 
         String folder = GetFromConfig.filePath("wikigir.base_path", "wikigir.inverted_index.folder");
-        String p = null;
 
+        String p;
         switch(this.type)
         {
             case WORDS_TO_ARTICLES_COMPLETE:
@@ -287,11 +287,10 @@ public class InvertedIndex
         transformTo3DIntList();
     }
 
-    // Trims the working map (with the inverted index) into the slimmest possible version: an array
-    // of integer arrays: the integer array matching cell x is the list of title IDs in whose articles
-    // the word/category, whose ID is x, appeared.
-    // Naturally, some indices have empty mappings, but it allows accessing the list in instant
-    // time, given the word ID.
+    // Trims the working map (with the inverted index) into the slimmest possible version: an array of integer arrays:
+    // the integer array matching cell x is the list of title IDs in whose articles the word/named location/category
+    // (with ID x) appeared. Naturally, some indices might have empty mappings, but it allows accessing the list in
+    // instant time, given the word ID.
     protected void transformTo3DIntList()
     {
         // Dynamically resized when necessary.
@@ -406,15 +405,18 @@ public class InvertedIndex
     {
         for(Type t : Type.values())
         {
+            System.out.println("Creating index for type: " + t.name());
             InvertedIndex.getInstance(t).create();
         }
     }
 
     public static void main(String[] args)
     {
-        System.out.println("Creating articles file mapping if missing...");
+        System.out.println("Creating dictionary (or loading from disk).");
+        Dictionary.getInstance().create();
+        System.out.println("Creating articles file mapping (or loading from disk).");
         ArticlesFactory.getInstance().create();
-
+        System.out.println("Done, creating inverted indices:");
         createAll();
     }
 }

@@ -3,6 +3,7 @@ package com.krause.wikigir.main.models.general;
 import java.util.*;
 import java.io.*;
 
+import com.krause.wikigir.main.Constants;
 import com.krause.wikigir.main.models.articles.dataCreation.CleanTextXMLParser;
 import com.krause.wikigir.main.models.utils.*;
 
@@ -159,7 +160,7 @@ public class Dictionary
                                 this.df.put(id, this.df.get(id) + 1);
                             });
 
-                            if(++counter[0] % 10_000 == 0)
+                            if(++counter[0] % Constants.GENERATION_PRINT_CHECKPOINT == 0)
                             {
                                 System.out.println("Passed " + counter[0] + " articles, dictionary" +
                                                    " now contains " + this.df.size() + " words.");

@@ -134,11 +134,11 @@ public class IsAInCreator
 
     public static void main(String[] args)
     {
-        System.out.println("Creating coordinates.");
+        System.out.println("Creating coordinates mapping (or loading from disk).");
         Map<String, Coordinates> coordinates = new ArticlesCoordinatesCreator().create();
-        System.out.println("Creating redirects.");
+        System.out.println("Creating redirects mapping (or loading from disk).");
         Map<String, String> redirects = new ArticlesRedirectsCreator().create();
-        System.out.println("Creating is-a-in mapping.");
+        System.out.println("Creating is-a-in mapping (or loading from disk).");
         int howMany = new IsAInCreator(coordinates, redirects).create().size();
         System.out.println("Created. Found " + howMany + " articles with \"is a ___ in ___\" structure.");
     }
