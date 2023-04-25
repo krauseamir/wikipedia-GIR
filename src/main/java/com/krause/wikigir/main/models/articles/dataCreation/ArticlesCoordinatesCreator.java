@@ -7,11 +7,9 @@ import java.util.*;
 import java.io.*;
 
 import com.krause.wikigir.main.Constants;
-import com.krause.wikigir.main.models.utils.BlockingThreadFixedExecutor;
+import com.krause.wikigir.main.models.utils.*;
 import com.krause.wikigir.main.models.general.WikiXMLArticlesExtractor;
-import com.krause.wikigir.main.models.utils.CustomSerializable;
 import com.krause.wikigir.main.models.general.Coordinates;
-import com.krause.wikigir.main.models.utils.GetFromConfig;
 import com.krause.wikigir.main.models.general.XMLParser;
 import org.apache.commons.lang3.StringUtils;
 
@@ -90,14 +88,15 @@ public class ArticlesCoordinatesCreator
 
     private void readFromXml()
     {
-        int[] passed = {0}, failed = {0};
+        int[] processed = {0};
 
         WikiXMLArticlesExtractor.extract(getCoordinatesParserFactory(),
             (parser, text) ->
                 this.executor.execute(() ->
                 {
-                    try
+                    ExceptionWrapper.wrap(() ->
                     {
+                        ProgressBar.mark(processed, Constants.NUMBER_OF_ARTICLES);
                         parser.parse(text);
 
                         synchronized(ArticlesCoordinatesCreator.this)
@@ -107,28 +106,14 @@ public class ArticlesCoordinatesCreator
                                 if(parser.getResult().get(COORDINATES_KEY) != null)
                                 {
                                     ArticlesCoordinatesCreator.this.coordinatesMapping.put(parser.getTitle(),
-                                                        (Coordinates)parser.getResult().get(COORDINATES_KEY));
+                                                       (Coordinates)parser.getResult().get(COORDINATES_KEY));
                                 }
                             }
-
-                            if(++passed[0] % Constants.GENERATION_PRINT_CHECKPOINT == 0)
-                            {
-                                System.out.println("Passed " + passed[0] + " articles, found: " +
-                                        ArticlesCoordinatesCreator.this.coordinatesMapping.size() +
-                                        " articles with title-level coordinates.");
-                            }
                         }
-                    }
-                    catch(Exception e)
-                    {
-                        failed[0]++;
-                    }
+                    }, ExceptionWrapper.Action.IGNORE);
                 }), ARTICLES_LIMIT);
 
         this.executor.waitForTermination();
-
-        System.out.println("Done. Found " + this.coordinatesMapping.size() + " articles with locations.");
-        System.out.println("Failed to parse: " + failed[0] + " articles.");
     }
 
     // Creates a factory generating an implementation of the XML parser which attempts to extract

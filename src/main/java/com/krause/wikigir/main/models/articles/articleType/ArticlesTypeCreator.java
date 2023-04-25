@@ -77,12 +77,14 @@ public class ArticlesTypeCreator
     // Iterates through the enwiki xml file and generates the needed information.
     private void createFromXml()
     {
-        int[] parsed = {0};
+        int[] processed = {0};
+
         WikiXMLArticlesExtractor.extract(ArticleLocationInfoboxXMLParser::new,
             (parser, text) ->
                 this.executor.execute(() ->
                     ExceptionWrapper.wrap(() ->
                     {
+                        ProgressBar.mark(processed, Constants.NUMBER_OF_ARTICLES);
                         parser.addTitleToResult(text);
                         parser.parse(text);
 
@@ -126,17 +128,12 @@ public class ArticlesTypeCreator
                             }
                         }
 
-                        if(t != null)
+                        synchronized(this.articlesTypeMap)
                         {
-                            synchronized(this.articlesTypeMap)
+                            if(t != null)
                             {
                                 this.articlesTypeMap.put(parser.getTitle(), t);
                             }
-                        }
-
-                        if(++parsed[0] % Constants.GENERATION_PRINT_CHECKPOINT == 0)
-                        {
-                            System.out.println("Passed " + parsed[0] + " articles.");
                         }
                     }, ExceptionWrapper.Action.NOTIFY_LONG)
                 ), PAGES_LIMIT);

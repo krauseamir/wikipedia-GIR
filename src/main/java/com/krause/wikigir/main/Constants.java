@@ -6,12 +6,13 @@ public class Constants
 {
     public static final String CONFIGURATION_FILE = "program.properties";
 
+    // Parsed beforehand, only used for convenience (printing progress bars).
+    public static final int NUMBER_OF_ARTICLES = 5913419;
+
+    // TODO: set this.
+    // Parsed beforehand, only used for convenience (printing progress bars).
+    public static final int NUMBER_OF_ARTICLES_AND_REDIRECTS = 5913419;
+
     // Used just for pretty printing of values.
     public static final DecimalFormat DF = new DecimalFormat("#.##");
-
-    /**
-     * Since generating most data structures involves heavy parsing of the Wikipedia XML file, we print the state of
-     * advancement every GENERATION_PRINT_CHECKPOINT articles, so the process does not seem stuck for too long.
-     */
-    public static final int GENERATION_PRINT_CHECKPOINT = 100_000;
 }

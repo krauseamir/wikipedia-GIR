@@ -4,13 +4,10 @@ import com.krause.wikigir.main.Constants;
 import com.krause.wikigir.main.models.articles.dataCreation.ArticlesCoordinatesCreator;
 import com.krause.wikigir.main.models.articles.dataCreation.ArticlesRedirectsCreator;
 import com.krause.wikigir.main.models.articles.articleType.ArticlesTypeCreator;
-import com.krause.wikigir.main.models.utils.BlockingThreadFixedExecutor;
+import com.krause.wikigir.main.models.utils.*;
 import com.krause.wikigir.main.models.general.WikiXMLArticlesExtractor;
 import com.krause.wikigir.main.models.articles.articleType.ArticleType;
-import com.krause.wikigir.main.models.utils.CustomSerializable;
-import com.krause.wikigir.main.models.utils.ExceptionWrapper;
 import com.krause.wikigir.main.models.general.Coordinates;
-import com.krause.wikigir.main.models.utils.GetFromConfig;
 
 import java.util.*;
 import java.io.*;
@@ -88,9 +85,7 @@ public class ExplicitLocatedAtCreator
 
     private void readFromXml()
     {
-        int[] passed = {0};
-        int[] articleHasCoordinates = {0};
-        int[] articleHasCoordinatesAndLocatedAt = {0};
+        int[] processed = {0};
 
         WikiXMLArticlesExtractor.extract(
             () -> new ExplicitLocatedAtParser(this.articlesWithCoordinates, this.articlesTypesMap, this.redirects),
@@ -98,13 +93,9 @@ public class ExplicitLocatedAtCreator
                 this.executor.execute(() ->
                     ExceptionWrapper.wrap(() ->
                     {
+                        ProgressBar.mark(processed, Constants.NUMBER_OF_ARTICLES);
                         parser.addTitleToResult(text);
                         parser.parse(text);
-
-                        if(ExplicitLocatedAtCreator.this.articlesWithCoordinates.get(parser.getTitle()) != null)
-                        {
-                            articleHasCoordinates[0]++;
-                        }
 
                         String location = (String)parser.getResult().get(ExplicitLocatedAtParser.LOCATION_KEY);
 
@@ -113,28 +104,12 @@ public class ExplicitLocatedAtCreator
                             if(location != null)
                             {
                                 this.locatedAtMapping.put(parser.getTitle(), location);
-
-                                if(ExplicitLocatedAtCreator.this.articlesWithCoordinates.get(parser.getTitle()) != null)
-                                {
-                                    articleHasCoordinatesAndLocatedAt[0]++;
-                                }
-                            }
-
-                            if(++passed[0] % Constants.GENERATION_PRINT_CHECKPOINT == 0)
-                            {
-                                System.out.println("Passed " + passed[0] + " articles, found: " +
-                                        ExplicitLocatedAtCreator.this.locatedAtMapping.size() +
-                                        " articles with explicit located-at.");
                             }
                         }
                     }, ExceptionWrapper.Action.NOTIFY_LONG)
                 ), ARTICLES_LIMIT);
 
         this.executor.waitForTermination();
-
-        System.out.println("Found " + this.locatedAtMapping.size() + " articles with 'located in/at'.");
-        System.out.println("Out of the " + articleHasCoordinates[0] + " articles with coordinates, " +
-                            articleHasCoordinatesAndLocatedAt[0] + " have a 'located at' structure.");
     }
 
     private class Serializer implements CustomSerializable

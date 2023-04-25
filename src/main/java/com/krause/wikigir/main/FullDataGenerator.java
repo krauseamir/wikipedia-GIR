@@ -40,32 +40,32 @@ public class FullDataGenerator
     {
         startProcess("Creating dictionary:");
         Dictionary.getInstance().create();
-        System.out.println();
+        endProcess();
 
         startProcess("Creating articles' data:");
         ArticlesFactory af = ArticlesFactory.getInstance();
         af.create();
-        System.out.println();
+        endProcess();
 
         startProcess("Creating inverted indices:");
         InvertedIndex.createAll();
-        System.out.println();
+        endProcess();
 
         startProcess("Creating nearest neighbors:");
         NearestNeighbors.createFile();
-        System.out.println();
+        endProcess();
 
         startProcess("Creating categories' data:");
         System.out.println("Categories data:");
         CategoriesFactory.getInstance().create();
         System.out.println("Categories names graph:");
         CategoryNamesGraph.getInstance().create();
-        System.out.println();
+        endProcess();
 
         startProcess("Creating additional structures");
         System.out.println("is-a-in detection:");
         new IsAInCreator(af.getCoordinatesMapping(), af.getRedirects()).create();
-        System.out.println();
+        endProcess();
     }
 
     private static void startProcess(String s)
@@ -82,5 +82,6 @@ public class FullDataGenerator
         System.out.println();
         double seconds = ((System.currentTimeMillis() - startTime) / 1000.0);
         System.out.println("Completed in " + Constants.DF.format(seconds) + " seconds.");
+        System.out.println();
     }
 }

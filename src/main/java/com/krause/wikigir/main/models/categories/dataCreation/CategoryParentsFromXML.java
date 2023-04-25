@@ -3,6 +3,7 @@ package com.krause.wikigir.main.models.categories.dataCreation;
 import com.krause.wikigir.main.Constants;
 import com.krause.wikigir.main.models.general.WikiXMLArticlesExtractor;
 import com.krause.wikigir.main.models.utils.ExceptionWrapper;
+import com.krause.wikigir.main.models.utils.ProgressBar;
 
 import java.util.stream.Collectors;
 import java.util.List;
@@ -33,23 +34,19 @@ public class CategoryParentsFromXML extends CategoryNamesFromXMLBase
     @SuppressWarnings("unchecked")
     public void extract()
     {
-        int[] counter = {0};
+        int[] processed = {0};
 
         WikiXMLArticlesExtractor.extract(getCategoriesParserFactory(),
             (parser, text) ->
                 super.executor.execute(() ->
                     ExceptionWrapper.wrap(() ->
                     {
+                        ProgressBar.mark(processed, Constants.NUMBER_OF_ARTICLES);
                         parser.parse(text);
                         parser.addTitleToResult(text);
 
                         synchronized(this.categoriesMap)
                         {
-                            if(++counter[0] % Constants.GENERATION_PRINT_CHECKPOINT == 0)
-                            {
-                                System.out.println("Passed " + counter[0] + " XML pages, searching for categories.");
-                            }
-
                             if(parser.getTitle().startsWith("Category:"))
                             {
                                 String category = parser.getTitle().substring("Category:".length()).trim();

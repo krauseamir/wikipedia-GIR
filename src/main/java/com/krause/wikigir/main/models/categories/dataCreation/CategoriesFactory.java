@@ -5,6 +5,7 @@ import com.krause.wikigir.main.models.articles.dataCreation.ArticlesFactory;
 import com.krause.wikigir.main.models.general.Dictionary;
 import com.krause.wikigir.main.models.utils.CustomSerializable;
 import com.krause.wikigir.main.models.categories.CategoryData;
+import com.krause.wikigir.main.models.utils.ProgressBar;
 import com.krause.wikigir.main.models.utils.StringsIdsMapper;
 import com.krause.wikigir.main.models.utils.GetFromConfig;
 import com.krause.wikigir.main.models.general.Coordinates;
@@ -114,9 +115,11 @@ public class CategoriesFactory
 
         Map<Integer, AggregatedData> catIdsToData = new HashMap<>();
 
-        int counter = 0;
+        int[] processed = {0};
         for(Article article : articles.values())
         {
+            ProgressBar.mark(processed, Constants.NUMBER_OF_ARTICLES);
+
             if(article.getCategoryIds() == null)
             {
                 continue;
@@ -134,11 +137,6 @@ public class CategoriesFactory
 
                 // Increase the number of articles in the category, regardless of coordinates.
                 catIdsToData.get(catId).articlesCount++;
-            }
-
-            if(++counter % Constants.GENERATION_PRINT_CHECKPOINT == 0)
-            {
-                System.out.println("Passed " + counter + " articles.");
             }
         }
 

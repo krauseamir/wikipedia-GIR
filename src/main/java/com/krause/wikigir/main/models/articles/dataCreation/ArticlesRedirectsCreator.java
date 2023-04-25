@@ -3,10 +3,7 @@ package com.krause.wikigir.main.models.articles.dataCreation;
 import com.krause.wikigir.main.Constants;
 import com.krause.wikigir.main.models.general.WikiXMLArticlesExtractor;
 import com.krause.wikigir.main.models.general.XMLParser;
-import com.krause.wikigir.main.models.utils.BlockingThreadFixedExecutor;
-import com.krause.wikigir.main.models.utils.CustomSerializable;
-import com.krause.wikigir.main.models.utils.ExceptionWrapper;
-import com.krause.wikigir.main.models.utils.GetFromConfig;
+import com.krause.wikigir.main.models.utils.*;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -61,13 +58,14 @@ public class ArticlesRedirectsCreator
 
     private void readFromXml()
     {
-        int[] passed = {0};
+        int[] processed = {0};
 
         WikiXMLArticlesExtractor.extractRedirects(getRedirectsParserFactory(),
             (parser, text) ->
                 this.executor.execute(() ->
                     ExceptionWrapper.wrap(() ->
                     {
+                        ProgressBar.mark(processed, Constants.NUMBER_OF_ARTICLES_AND_REDIRECTS);
                         parser.parse(text);
 
                         if(parser.getTitle() == null)
@@ -82,18 +80,11 @@ public class ArticlesRedirectsCreator
                             {
                                 ArticlesRedirectsCreator.this.redirectsMap.put(parser.getTitle(), redirect);
                             }
-
-                            if(++passed[0] % Constants.GENERATION_PRINT_CHECKPOINT == 0)
-                            {
-                                System.out.println("Passed " + passed[0] + " (redirect) articles.");
-                            }
                         }
                     })
                 ), ARTICLES_LIMIT);
 
         this.executor.waitForTermination();
-
-        System.out.println("Found " + this.redirectsMap.size() + " pages with redirects.");
     }
 
     private XMLParser.XMLParserFactory getRedirectsParserFactory()

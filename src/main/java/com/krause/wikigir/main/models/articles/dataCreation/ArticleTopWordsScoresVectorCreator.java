@@ -68,13 +68,14 @@ public class ArticleTopWordsScoresVectorCreator
     // Parses the entire Wikipedia XML file to generate the mappings.
     private void readFromXml()
     {
-        int[] parsed = {0};
+        int[] processed = {0};
 
         WikiXMLArticlesExtractor.extract(CleanTextXMLParser::new,
             (parser, text) ->
                 this.executor.execute(() ->
                     ExceptionWrapper.wrap(() ->
                     {
+                        ProgressBar.mark(processed, Constants.NUMBER_OF_ARTICLES);
                         parser.parse(text);
                         parser.addTitleToResult(text);
 
@@ -93,11 +94,6 @@ public class ArticleTopWordsScoresVectorCreator
                         synchronized(ArticleTopWordsScoresVectorCreator.this)
                         {
                             this.vectorsMap.put(parser.getTitle(), scoresVector);
-
-                            if (++parsed[0] % Constants.GENERATION_PRINT_CHECKPOINT == 0)
-                            {
-                                System.out.println("Passed and processed " + parsed[0] + " articles.");
-                            }
                         }
                     }, ExceptionWrapper.Action.NOTIFY_LONG)
                 ), ARTICLES_LIMIT);

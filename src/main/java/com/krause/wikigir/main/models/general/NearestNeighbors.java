@@ -2,15 +2,10 @@ package com.krause.wikigir.main.models.general;
 
 import com.krause.wikigir.main.models.articles.dataCreation.ArticlesFactory;
 import com.krause.wikigir.main.models.articles.ArticlesSimilarityCalculator;
-import com.krause.wikigir.main.models.utils.ExceptionWrapper;
-import com.krause.wikigir.main.models.utils.StringsIdsMapper;
-import com.krause.wikigir.main.models.utils.GetFromConfig;
+import com.krause.wikigir.main.models.utils.*;
 import com.krause.wikigir.main.models.articles.Article;
-import com.krause.wikigir.main.models.utils.Pair;
 import com.krause.wikigir.main.Constants;
 
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -61,20 +56,27 @@ public class NearestNeighbors
          */
         public void run()
         {
+            final StringsIdsMapper titlesToIds = ArticlesFactory.getInstance().getTitleToIdsMapper();
+
             for(Map.Entry<String, Article> e : this.subset)
             {
                 ExceptionWrapper.wrap(() ->
                 {
-                    List<Pair<String, Float>> result = getNearestNeighborsWithLocations(e.getValue());
+                    ProgressBar.mark(processed, Constants.NUMBER_OF_ARTICLES);
 
-                    NearestNeighbors.this.write(e.getKey(), result);
+                    List<Pair<Integer, Float>> result = getNearestNeighborsWithLocations(e.getValue());
 
-                    int count = NearestNeighbors.this.count.incrementAndGet();
-                    if(count % Constants.GENERATION_PRINT_CHECKPOINT == 0)
+                    NearestNeighbors.this.write(titlesToIds.getID(e.getKey()), result);
+
+                    synchronized (NearestNeighbors.class)
                     {
-                        System.out.println("Passed " + count + " articles.");
+                        if(processed[0] % 100 == 0)
+                        {
+                            System.out.println("Passed " + processed[0]);
+                        }
                     }
-                }, NOTIFY_LONG);
+                },
+                NOTIFY_LONG);
             }
         }
 
@@ -84,7 +86,7 @@ public class NearestNeighbors
         // 3. Sort the neighbors by matching score, in descending order, and trim the list if necessary.
         // Note the pruning is done on an inverted index containing only pages that have coordinates (other pages are
         // irrelevant for the purpose of assessing locations).
-        private List<Pair<String, Float>> getNearestNeighborsWithLocations(Article article)
+        private List<Pair<Integer, Float>> getNearestNeighborsWithLocations(Article article)
         {
             List<Pair<String, Float>> result = new ArrayList<>();
 
@@ -94,7 +96,7 @@ public class NearestNeighbors
             {
                 Article candidate = NearestNeighbors.this.articles.get(title);
 
-                // Shouldn't happen: all articles have a mapping and the index only indexes articles with coordinates.
+                // Safety (shouldn't happen): all articles have a mapping. The index only has articles with coordinates.
                 if(candidate == null || candidate.getCoordinates(null) == null)
                 {
                     continue;
@@ -122,7 +124,7 @@ public class NearestNeighbors
                 result = result.subList(0, NearestNeighbors.this.maxNeighborsPerArticle);
             }
 
-            return result;
+            return verifyAndTransformData(article.getTitle(), result);
         }
 
         // Given an article a*, this method fetches only a small subset of the entire articles corpus, which might be
@@ -169,10 +171,52 @@ public class NearestNeighbors
 
             return pruned;
         }
+
+        // Perform additional safety verifications on the results, and transforms all neighbors string titles to IDs.
+        // The two safety verifications are that title indeed have IDs, and that one of the neighbors isn't the article
+        // itself (then, using its coordinates is technically valid, as we do not "know" this named location is the
+        // truth value, but is avoided nonetheless). Note that this also cannot technically happen since the pruning
+        // method in the inverted index explicitly removes the title from its matched pruned candidate neighbors.
+        // But it doesn't hurt (other than wasted CPU cycles...) to double verify for data integrity :)
+        private List<Pair<Integer, Float>> verifyAndTransformData(String title, List<Pair<String, Float>> neighbors)
+        {
+            // Note that all the tests for the existence of the titleID are almost redundant, since all
+            // IDs should have matching title, but it is tested regardless to validate the data.
+            final StringsIdsMapper titleIdMapper = ArticlesFactory.getInstance().getTitleToIdsMapper();
+
+            Integer titleId = ArticlesFactory.getInstance().getTitleToIdsMapper().getID(title);
+
+            if(titleId == null)
+            {
+                return null;
+            }
+
+            List<Pair<Integer, Float>> verified = new ArrayList<>();
+            for(Pair<String, Float> neighbor : neighbors)
+            {
+                // Only write neighbors which have IDs - should be all of them.
+                if(titleIdMapper.getID(neighbor.v1) == null)
+                {
+                    continue;
+                }
+
+                // Handle the odd case where the same article appears in its contained named locations - then, using
+                // its coordinates is technically valid (as we do not "know" this named location is the truth value),
+                // but is avoided nonetheless.
+                if(title.equals(neighbor.v1))
+                {
+                    continue;
+                }
+
+                verified.add(new Pair<>(titleIdMapper.getID(neighbor.v1), neighbor.v2));
+            }
+
+            return verified;
+        }
     }
 
     // Counts the total number of articles processed, updated by the workers.
-    private final AtomicInteger count;
+    private int[] processed;
 
     // The mapping from titles to Article objects created by ArticlesFactory.
     private final Map<String, Article> articles;
@@ -202,6 +246,7 @@ public class NearestNeighbors
     private final double namedLocationsScoreWeight; // In the article - beta
     private final double categoriesScoreWeight;     // In the article - gamma
 
+    // The number of worker threads to instantiate.
     private final int numWorkers;
 
     // The output stream for the resulting mapping.
@@ -234,7 +279,7 @@ public class NearestNeighbors
         this.categoriesScoreWeight = weights.get(CATEGORIES_WEIGHT_KEY);
         this.namedLocationsScoreWeight = weights.get(NAMED_LOCATIONS_WEIGHT_KEY);
 
-        this.count = new AtomicInteger(0);
+        this.processed = new int[]{0};
     }
 
     /**
@@ -294,31 +339,13 @@ public class NearestNeighbors
 
     // Outputs the mapping of a single article (title ID + list of neighboring title IDs and the matching score)
     // to disk. Note that this method is synchronized as it is used concurrently by all workers.
-    private synchronized void write(String title, List<Pair<String, Float>> neighbors)
+    private synchronized void write(int titleID, List<Pair<Integer, Float>> neighbors)
     {
-        // Note that all the tests for the existence of the titleID are almost redundant, since all
-        // IDs should have matching title, but it is tested regardless to validate the data.
-        final StringsIdsMapper titleIdMapper = ArticlesFactory.getInstance().getTitleToIdsMapper();
-
         ExceptionWrapper.wrap(() ->
         {
-            Integer titleId = ArticlesFactory.getInstance().getTitleToIdsMapper().getID(title);
-
-            if(titleId == null)
-            {
-                return;
-            }
-
-            this.out.writeInt(titleId);
-
-            // Filter by titles which have IDs (should be all), transform to IDs list.
-            List<Pair<Integer, Float>> existing = neighbors.stream().filter(p -> titleIdMapper.getID(p.v1) != null).
-                                                  map(p -> new Pair<>(titleIdMapper.getID(p.v1), p.v2)).
-                                                  collect(Collectors.toList());
-
-            this.out.writeInt(existing.size());
-
-            for(Pair<Integer, Float> neighbor : existing)
+            this.out.writeInt(titleID);
+            this.out.writeInt(neighbors.size());
+            for(Pair<Integer, Float> neighbor : neighbors)
             {
                 this.out.writeInt(neighbor.v1);
                 this.out.writeFloat(neighbor.v2);

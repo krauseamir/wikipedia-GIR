@@ -123,7 +123,7 @@ public class Dictionary
 
     private void readFromXml()
     {
-        int[] counter = {0};
+        int[] processed = {0};
         int[] nextId = {1};
 
         WikiXMLArticlesExtractor.extract(CleanTextXMLParser::new,
@@ -133,6 +133,7 @@ public class Dictionary
                 {
                     ExceptionWrapper.wrap(() ->
                     {
+                        ProgressBar.mark(processed, Constants.NUMBER_OF_ARTICLES);
                         parser.parse(text);
 
                         List<String> words = TextTokenizer.tokenize((String)parser.getResult().get(
@@ -159,12 +160,6 @@ public class Dictionary
                                 this.df.putIfAbsent(id, 0);
                                 this.df.put(id, this.df.get(id) + 1);
                             });
-
-                            if(++counter[0] % Constants.GENERATION_PRINT_CHECKPOINT == 0)
-                            {
-                                System.out.println("Passed " + counter[0] + " articles, dictionary" +
-                                                   " now contains " + this.df.size() + " words.");
-                            }
                         }
                     },
                     ExceptionWrapper.Action.NOTIFY_LONG);

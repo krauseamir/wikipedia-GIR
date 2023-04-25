@@ -2,11 +2,8 @@ package com.krause.wikigir.main.models.namedLocationsParsers;
 
 import com.krause.wikigir.main.models.articles.dataCreation.ArticlesCoordinatesCreator;
 import com.krause.wikigir.main.models.articles.dataCreation.ArticlesRedirectsCreator;
-import com.krause.wikigir.main.models.utils.BlockingThreadFixedExecutor;
+import com.krause.wikigir.main.models.utils.*;
 import com.krause.wikigir.main.models.general.WikiXMLArticlesExtractor;
-import com.krause.wikigir.main.models.utils.CustomSerializable;
-import com.krause.wikigir.main.models.utils.ExceptionWrapper;
-import com.krause.wikigir.main.models.utils.GetFromConfig;
 import com.krause.wikigir.main.models.general.Coordinates;
 import com.krause.wikigir.main.Constants;
 
@@ -61,22 +58,16 @@ public class IsAInCreator
     @SuppressWarnings("unchecked")
     private void readFromXml()
     {
-        int[] counter = {0};
-        int[] articlesWithCoordinates = {0};
-        int[] articlesWithCoordinatesAndIsAIn = {0};
+        int[] processed = {0};
 
         WikiXMLArticlesExtractor.extract(() -> new IsAInParser(this.articlesWithCoordinates, this.redirects),
             (parser, text) ->
                 this.executor.execute(() ->
                     ExceptionWrapper.wrap(() ->
                     {
+                        ProgressBar.mark(processed, Constants.NUMBER_OF_ARTICLES);
                         parser.addTitleToResult(text);
                         parser.parse(text);
-
-                        if(IsAInCreator.this.articlesWithCoordinates.get(parser.getTitle()) != null)
-                        {
-                            articlesWithCoordinates[0]++;
-                        }
 
                         List<String> locations = (List<String>)parser.getResult().get(IsAInParser.ENTITIES_KEY);
 
@@ -85,26 +76,12 @@ public class IsAInCreator
                             if(locations != null && !locations.isEmpty())
                             {
                                 this.mapping.put(parser.getTitle(), locations);
-
-                                if(IsAInCreator.this.articlesWithCoordinates.get(parser.getTitle()) != null)
-                                {
-                                    articlesWithCoordinatesAndIsAIn[0]++;
-                                }
-                            }
-
-                            if(++counter[0] % Constants.GENERATION_PRINT_CHECKPOINT == 0)
-                            {
-                                System.out.println("Passed " + counter[0] + " articles, found: " +
-                                                   IsAInCreator.this.mapping.size());
                             }
                         }
                     }, ExceptionWrapper.Action.IGNORE)
                 ), ARTICLES_LIMIT);
 
         this.executor.waitForTermination();
-
-        System.out.println("Articles with coordinates: " + articlesWithCoordinates[0] + ", articles with " +
-                           "coordinates and is-a-in structure: " + articlesWithCoordinatesAndIsAIn[0]);
     }
 
     private class Serializer implements CustomSerializable

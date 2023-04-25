@@ -80,31 +80,29 @@ public class ArticlesCategoriesCreator extends CategoryNamesFromXMLBase
     @SuppressWarnings("unchecked")
     private Map<String, List<String>> readFromXml()
     {
-        final Map<String, List<String>> categoriesMapping = new HashMap<>();
+        final Map<String, List<String>> catsMapping = new HashMap<>();
+
+        int[] processed = {0};
 
         WikiXMLArticlesExtractor.extract(getCategoriesParserFactory(),
             (parser, text) ->
                 this.executor.execute(() ->
                     ExceptionWrapper.wrap(() ->
                     {
+                        ProgressBar.mark(processed, Constants.NUMBER_OF_ARTICLES);
                         parser.addTitleToResult(text);
                         parser.parse(text);
 
-                        synchronized(categoriesMapping)
+                        synchronized(catsMapping)
                         {
-                            categoriesMapping.put(parser.getTitle(), (List<String>)parser.getResult().get(CATEGORIES_KEY));
-
-                            if(categoriesMapping.size() % Constants.GENERATION_PRINT_CHECKPOINT == 0)
-                            {
-                                System.out.println("Passed " + categoriesMapping.size() + " articles.");
-                            }
+                            catsMapping.put(parser.getTitle(), (List<String>)parser.getResult().get(CATEGORIES_KEY));
                         }
                     }, ExceptionWrapper.Action.NOTIFY_LONG)
                 ), ARTICLES_LIMIT);
 
         this.executor.waitForTermination();
 
-        return categoriesMapping;
+        return catsMapping;
     }
 
     // Once all categories (as strings) have been extracted for each article, create the mapping from categories (as
