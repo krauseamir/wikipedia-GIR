@@ -79,14 +79,14 @@ public class ArticlesCoordinatesCreator
         }
         else
         {
-            readFromXml();
+            readFromXML();
             new Serializer().serialize();
         }
 
         return this.coordinatesMapping;
     }
 
-    private void readFromXml()
+    private void readFromXML()
     {
         int[] processed = {0};
 

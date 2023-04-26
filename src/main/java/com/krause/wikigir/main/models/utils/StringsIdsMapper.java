@@ -41,11 +41,11 @@ public class StringsIdsMapper
      * @param strings   the strings to be matched with identifiers.
      * @return          this mapping object.
      */
-    public StringsIdsMapper createFromCollection(Collection<String> strings)
+    public void createFromCollection(Collection<String> strings)
     {
         if(this.filePath == null)
         {
-            return this;
+            return;
         }
 
         if(new File(this.filePath).exists())
@@ -63,8 +63,6 @@ public class StringsIdsMapper
 
             new Serializer().serialize();
         }
-
-        return this;
     }
 
     public void add(String s, int id)

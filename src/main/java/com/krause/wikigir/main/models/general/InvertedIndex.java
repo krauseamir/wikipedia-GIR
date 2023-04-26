@@ -171,8 +171,7 @@ public class InvertedIndex
                 break;
             case NAMED_LOCATIONS_TO_ARTICLES_COMPLETE:
             case NAMED_LOCATIONS_TO_ARTICLES_WITH_COORDINATES:
-                ids = a.getLocationsData().getValidLocations().stream().mapToInt(p ->
-                      ArticlesFactory.getInstance().getTitleToIdsMapper().getID(p.v1)).toArray();
+                ids = a.getNamedLocations().stream().mapToInt(p -> p.v1).toArray();
         }
 
         List<int[][]> lists = new ArrayList<>();

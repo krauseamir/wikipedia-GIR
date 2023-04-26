@@ -77,7 +77,7 @@ public class Dictionary
         }
         else
         {
-            readFromXml();
+            readFromXML();
             new Serializer().serialize();
         }
 
@@ -121,7 +121,7 @@ public class Dictionary
         return this.created;
     }
 
-    private void readFromXml()
+    private void readFromXML()
     {
         int[] processed = {0};
         int[] nextId = {1};

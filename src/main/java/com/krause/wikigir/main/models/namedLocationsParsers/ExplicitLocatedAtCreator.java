@@ -76,14 +76,14 @@ public class ExplicitLocatedAtCreator
         }
         else
         {
-            readFromXml();
+            readFromXML();
             new Serializer().serialize();
         }
 
         return this.locatedAtMapping;
     }
 
-    private void readFromXml()
+    private void readFromXML()
     {
         int[] processed = {0};
 

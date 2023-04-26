@@ -2,8 +2,8 @@ package com.krause.wikigir.main.models.articles.dataCreation;
 
 import com.krause.wikigir.main.models.namedLocationsParsers.ExplicitLocatedAtCreator;
 import com.krause.wikigir.main.models.articles.articleType.ArticlesTypeCreator;
-import com.krause.wikigir.main.models.articles.NamedLocationsInArticle;
 import com.krause.wikigir.main.models.articles.articleType.ArticleType;
+import com.krause.wikigir.main.models.namedLocationsParsers.IsAInCreator;
 import com.krause.wikigir.main.models.utils.StringsIdsMapper;
 import com.krause.wikigir.main.models.general.ScoresVector;
 import com.krause.wikigir.main.models.general.Coordinates;
@@ -55,8 +55,8 @@ public class ArticlesFactory
     public Map<String, Article> create()
     {
         System.out.println("Creating articles' top-words scores vector.");
-        Map<String, ScoresVector> articlesTexts = new ArticleTopWordsScoresVectorCreator().create();
-        this.titleIdsMapper.createFromCollection(articlesTexts.keySet());
+        Map<String, ScoresVector> wordsScoresVectors = new ArticleTopWordsScoresVectorCreator().create();
+        this.titleIdsMapper.createFromCollection(wordsScoresVectors.keySet());
 
         System.out.println("Creating articles to coordinates mapping.");
         this.coordinatesMap = new ArticlesCoordinatesCreator().create();
@@ -65,8 +65,8 @@ public class ArticlesFactory
         this.redirects = new ArticlesRedirectsCreator().create();
 
         System.out.println("Creating articles to contained named locations mapping.");
-        Map<String, NamedLocationsInArticle> locations =
-                new ArticlesNamedLocationsCreator(this.coordinatesMap, this.redirects).create();
+        Map<String, List<Pair<Integer, Integer>>> namedLocationsInArticles = new ArticlesNamedLocationsCreator(
+                                                 this.titleIdsMapper, this.redirects, this.coordinatesMap).create();
 
         System.out.println("Creating articles to categories mapping.");
         Pair<Map<String, int[]>, StringsIdsMapper> p = new ArticlesCategoriesCreator().create();
@@ -76,32 +76,19 @@ public class ArticlesFactory
         System.out.println("Creating articles to article types mapping.");
         Map<String, ArticleType> articleTypesMap = new ArticlesTypeCreator(p.v1, p.v2).create();
 
-        System.out.println("Detecting articles with explicit located-at mapping.");
-        Map<String, String> articlesWithLocatedAt =
+        System.out.println("Detecting explicit located-at structures in articles.");
+        Map<String, String> locatedAtInArticles =
                 new ExplicitLocatedAtCreator(this.coordinatesMap, articleTypesMap, this.redirects).create();
+
+        System.out.println("Detecting explicit is-a-in structures in articles. ");
+        Map<String, List<String>> isAInInArticles = new IsAInCreator(this.coordinatesMap, this.redirects).create();
 
         for(String title : this.titleIdsMapper.getStrings())
         {
-            Article article = new Article(title);
-
-            article.setWordsScoresVector(articlesTexts.get(title));
-
-            // Will be null if there's no coordinates for that Wikipedia page.
-            article.setCoordinates(this.coordinatesMap.get(title));
-
-            article.setLocations(locations.get(title), this.titleIdsMapper);
-
-            article.setLocationType(articleTypesMap.get(title));
-            if(article.getLocationType() == null)
-            {
-                article.setLocationType(ArticleType.NONE);
-            }
-
-            article.setExplicitLocatedAt(articlesWithLocatedAt.get(title));
-
-            int[] categoryIds = articlesToCategoryIds.get(title);
-            categoryIds = categoryIds == null ? new int[0] : categoryIds;
-            article.setCategoryIds(categoryIds);
+            Article article = new Article(title, articleTypesMap.get(title), this.coordinatesMap.get(title),
+                                          articlesToCategoryIds.get(title), namedLocationsInArticles.get(title),
+                                          wordsScoresVectors.get(title), locatedAtInArticles.get(title),
+                                          isAInInArticles.get(title));
 
             this.articles.put(title, article);
         }

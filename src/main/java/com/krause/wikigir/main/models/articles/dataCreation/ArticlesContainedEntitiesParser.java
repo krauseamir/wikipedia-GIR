@@ -80,6 +80,12 @@ public class ArticlesContainedEntitiesParser extends XMLParser
             // does not appear in the page text, discard it (might have appeared in the infobox).
             int wordCount = getFirstWordCount(text, variants.get(0));
 
+            // Should not happen, but a safety check.
+            if(wordCount < 0)
+            {
+                continue;
+            }
+
             Map<String, Pair<Integer, Set<String>>> entitiesToWordLocationAndVariants =
                     (Map<String, Pair<Integer, Set<String>>>)this.result.get(ENTITIES_KEY);
 

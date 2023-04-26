@@ -54,7 +54,7 @@ public class ArticleTopWordsScoresVectorCreator
                 Dictionary.getInstance().create();
             }
 
-            readFromXml();
+            readFromXML();
             new Serializer().serialize();
         }
         else
@@ -66,7 +66,7 @@ public class ArticleTopWordsScoresVectorCreator
     }
 
     // Parses the entire Wikipedia XML file to generate the mappings.
-    private void readFromXml()
+    private void readFromXML()
     {
         int[] processed = {0};
 

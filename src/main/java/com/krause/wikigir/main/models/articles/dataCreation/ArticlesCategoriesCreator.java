@@ -66,7 +66,7 @@ public class ArticlesCategoriesCreator extends CategoryNamesFromXMLBase
                 Files.deleteIfExists(Paths.get(this.categoriesToIdsFile));
             });
 
-            Map<String, List<String>> categoriesMap = readFromXml();
+            Map<String, List<String>> categoriesMap = readFromXML();
             createAllMappings(categoriesMap); // This also serializes the categories to IDs mapping.
 
             new Serializer().serialize();
@@ -78,7 +78,7 @@ public class ArticlesCategoriesCreator extends CategoryNamesFromXMLBase
     // Reads the pages one by one from the enwiki.xml file and extracts the categories
     // as *strings* for each page, creating the initial mapping of titles to categories.
     @SuppressWarnings("unchecked")
-    private Map<String, List<String>> readFromXml()
+    private Map<String, List<String>> readFromXML()
     {
         final Map<String, List<String>> catsMapping = new HashMap<>();
 

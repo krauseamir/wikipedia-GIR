@@ -67,14 +67,6 @@ public class NearestNeighbors
                     List<Pair<Integer, Float>> result = getNearestNeighborsWithLocations(e.getValue());
 
                     NearestNeighbors.this.write(titlesToIds.getID(e.getKey()), result);
-
-                    synchronized (NearestNeighbors.class)
-                    {
-                        if(processed[0] % 100 == 0)
-                        {
-                            System.out.println("Passed " + processed[0]);
-                        }
-                    }
                 },
                 NOTIFY_LONG);
             }
@@ -408,7 +400,7 @@ public class NearestNeighbors
                            ", named locations weight = " + DF.format(weights.get(NAMED_LOCATIONS_WEIGHT_KEY)) +
                            ", categories weight = " + DF.format(weights.get(CATEGORIES_WEIGHT_KEY)));
 
-        System.out.println("Note: checkpoints are every " + GENERATION_PRINT_CHECKPOINT + " articles (slow process).");
+        System.out.println("Note: Creating this file takes a long time (perhaps even several days).");
 
         String completePath = filePath(basePath, weights);
 
@@ -421,6 +413,10 @@ public class NearestNeighbors
         if(!new File(completePath).exists())
         {
             new NearestNeighbors(completePath, weights).create();
+        }
+        else
+        {
+            System.out.println("Already created on disk.");
         }
     }
 

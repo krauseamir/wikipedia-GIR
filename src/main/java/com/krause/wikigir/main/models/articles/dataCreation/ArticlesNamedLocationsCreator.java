@@ -1,8 +1,9 @@
 package com.krause.wikigir.main.models.articles.dataCreation;
 
 import com.krause.wikigir.main.Constants;
+import com.krause.wikigir.main.models.general.Dictionary;
+import com.krause.wikigir.main.models.general.ScoresVector;
 import com.krause.wikigir.main.models.general.WikiXMLArticlesExtractor;
-import com.krause.wikigir.main.models.articles.NamedLocationsInArticle;
 import com.krause.wikigir.main.models.general.Coordinates;
 import com.krause.wikigir.main.models.general.XMLParser;
 import com.krause.wikigir.main.models.utils.*;
@@ -10,6 +11,7 @@ import com.krause.wikigir.main.models.utils.*;
 import java.util.stream.Collectors;
 import java.util.*;
 import java.io.*;
+import java.util.stream.Stream;
 
 /**
  * Responsible for generating a list of "location entities" (wikipedia articles that have manually tagged coordinates)
@@ -25,35 +27,46 @@ public class ArticlesNamedLocationsCreator
     // The key which is used to store and fetch the xml parser's result.
     private static final String ENTITIES_KEY = "entities";
 
+    // Named locations that were detected in the article past this word index are considered to be too
+    // far from the start and thus much less likely to be relevant to assessing the article's location.
+    private static final int MAX_WORD_INDEX =
+            GetFromConfig.intValue("wikigir.articles.max_word_index_for_named_locations");
+
+    private static final int FIRST_LOCATION_OCCURRENCE_INDEX = 0;
+    private static final int COUNT_INDEX = 1;
+
     // 0 = all articles.
     private static final int ARTICLES_LIMIT = 0;
 
     private final String filePath;
     private final BlockingThreadFixedExecutor executor;
     private final Map<String, Coordinates> titlesToCoordinates;
+    private final StringsIdsMapper titlesToIdsMapper;
     private final Map<String, String> redirects;
-    private final Map<String, NamedLocationsInArticle> titlesToLocationEntities;
+    private final Map<String, List<Pair<Integer, Integer>>> titlesToLocationEntities;
 
     /**
      * Constructor.
      * @param titlesToCoordinates the mapping of titles to coordinates.
      */
-    public ArticlesNamedLocationsCreator(Map<String, Coordinates> titlesToCoordinates, Map<String, String> redirects)
+    public ArticlesNamedLocationsCreator(StringsIdsMapper titlesToIdsMapper, Map<String, String> redirects,
+                                         Map<String, Coordinates> titlesToCoordinates)
     {
         this.filePath = GetFromConfig.filePath("wikigir.base_path", "wikigir.articles.folder",
                                                "wikigir.articles.articles_to_named_locations.file_name");
 
         this.executor = new BlockingThreadFixedExecutor();
+        this.titlesToIdsMapper = titlesToIdsMapper;
         this.titlesToLocationEntities = new HashMap<>();
         this.titlesToCoordinates = titlesToCoordinates;
         this.redirects = redirects;
     }
 
-    public Map<String, NamedLocationsInArticle> create()
+    public Map<String, List<Pair<Integer, Integer>>> create()
     {
         if(!new File(this.filePath).exists())
         {
-            readFromXml();
+            readFromXML();
             new Serializer().serialize();
         }
         else
@@ -65,7 +78,7 @@ public class ArticlesNamedLocationsCreator
     }
 
     @SuppressWarnings("unchecked")
-    private void readFromXml()
+    private void readFromXML()
     {
         int[] processed = {0};
 
@@ -86,10 +99,18 @@ public class ArticlesNamedLocationsCreator
                                     getResult().get(ENTITIES_KEY), (String)parser.getResult().get(
                                     CleanTextXMLParser.CLEAN_TEXT_KEY)); // Note: search variants in a clean text!
 
+                        // Filter bad data or irrelevant named locations - those with a total count of 0 (possible if
+                        // it was detected as a location in the "non clean text" version of the page, but its variants
+                        // were not found in the clean text), and those which appeared too far into the article's text.
+                        Stream<Pair<String, int[]>> filtered;
+                        filtered = locations.stream().filter(n -> n.v2[COUNT_INDEX] > 0);
+                        filtered = filtered.filter(n -> n.v2[FIRST_LOCATION_OCCURRENCE_INDEX] <= MAX_WORD_INDEX);
+
                         synchronized(this.titlesToLocationEntities)
                         {
-                            NamedLocationsInArticle nlia = new NamedLocationsInArticle(locations);
-                            this.titlesToLocationEntities.put(parser.getTitle(), nlia);
+                            this.titlesToLocationEntities.put(parser.getTitle(), filtered.map(n ->
+                                    new Pair<>(ArticlesNamedLocationsCreator.this.titlesToIdsMapper.getID(n.v1),
+                                               n.v2[COUNT_INDEX])).collect(Collectors.toList()));
                         }
                     }, ExceptionWrapper.Action.NOTIFY_LONG)
                 ), ARTICLES_LIMIT);
@@ -140,7 +161,11 @@ public class ArticlesNamedLocationsCreator
 
             int totalCount = countVariantOccurrences(toSearch, text);
 
-            workingMap.put(normalizedTitle, new int[] {entity.getValue().v1, totalCount});
+            int[] namedLocationData = new int[2];
+            namedLocationData[FIRST_LOCATION_OCCURRENCE_INDEX] = entity.getValue().v1;
+            namedLocationData[COUNT_INDEX] = totalCount;
+
+            workingMap.put(normalizedTitle, namedLocationData);
         }
 
         // At this point, the list is sorted based on the current word count, which is the number of words in the
@@ -246,23 +271,16 @@ public class ArticlesNamedLocationsCreator
         {
             out.writeInt(ArticlesNamedLocationsCreator.this.titlesToLocationEntities.size());
 
-            for(Map.Entry<String, NamedLocationsInArticle> e :
+            for(Map.Entry<String, List<Pair<Integer, Integer>>> e :
                     ArticlesNamedLocationsCreator.this.titlesToLocationEntities.entrySet())
             {
                 out.writeUTF(e.getKey());
 
-                out.writeInt(e.getValue().getAllLocations().size());
-                for(Pair<String, Integer> p : e.getValue().getAllLocations())
+                out.writeInt(e.getValue().size());
+                for(Pair<Integer, Integer> p : e.getValue())
                 {
-                    out.writeUTF(p.v1);
+                    out.writeInt(p.v1);
                     out.writeInt(p.v2);
-                }
-
-                out.writeInt(e.getValue().wordsUpToLocation.size());
-                for(Map.Entry<String, Integer> e2 : e.getValue().wordsUpToLocation.entrySet())
-                {
-                    out.writeUTF(e2.getKey());
-                    out.writeInt(e2.getValue());
                 }
             }
         }
@@ -276,39 +294,125 @@ public class ArticlesNamedLocationsCreator
             {
                 String title = in.readUTF();
 
-
                 int entitiesCount = in.readInt();
 
-                List<Pair<String, Integer>> locations = new ArrayList<>();
+                List<Pair<Integer, Integer>> locations = new ArrayList<>();
                 for(int j = 0; j < entitiesCount; j++)
                 {
-                    String entity = in.readUTF();
+                    int nlTitleId = in.readInt();
                     int count = in.readInt();
-                    locations.add(new Pair<>(entity, count));
+                    locations.add(new Pair<>(nlTitleId, count));
                 }
 
-                int wordsCountSize = in.readInt();
-                Map<String, Integer> wordsUpToLocation = new HashMap<>();
-                for(int j = 0; j < wordsCountSize; j++)
-                {
-                    String entity = in.readUTF();
-                    int words = in.readInt();
-                    wordsUpToLocation.put(entity, words);
-                }
-
-                ArticlesNamedLocationsCreator.this.titlesToLocationEntities.put(title,
-                            new NamedLocationsInArticle(wordsUpToLocation, locations));
+                ArticlesNamedLocationsCreator.this.titlesToLocationEntities.put(title, locations);
             }
         }
     }
 
-    public static void main(String[] args)
+    public static void main(String[] args) throws Exception
     {
+        /*
         System.out.println("Creating coordinates mapping (or loading from disk).");
         Map<String, Coordinates> coordinates = new ArticlesCoordinatesCreator().create();
         System.out.println("Creating redirects mapping (or loading from disk).");
         Map<String, String> redirects = new ArticlesRedirectsCreator().create();
+
+        System.out.println("Creating articles' top-words scores vector (or loading from disk). This is needed just " +
+                           "to get all of the article titles in the right order, to create the mapping, if missing.");
+
+        Dictionary.getInstance().create();
+        Map<String, ScoresVector> wordsScoresVectors = new ArticleTopWordsScoresVectorCreator().create();
+        StringsIdsMapper titlesIdsMapper = new StringsIdsMapper(GetFromConfig.filePath("wikigir.base_path",
+                            "wikigir.articles.folder", "wikigir.articles.titles_to_ids_mapping.file_name"));
+
+        titlesIdsMapper.createFromCollection(wordsScoresVectors.keySet());
+
         System.out.println("Creating named locations (or loading from disk).");
-        new ArticlesNamedLocationsCreator(coordinates, redirects).create();
+        new ArticlesNamedLocationsCreator(titlesIdsMapper, redirects, coordinates).create();
+        */
+
+        System.out.println("Data validity");
+
+        StringsIdsMapper titlesIdsMapper = new StringsIdsMapper(GetFromConfig.filePath("wikigir.base_path",
+                "wikigir.articles.folder", "wikigir.articles.titles_to_ids_mapping.file_name"));
+
+        titlesIdsMapper.createFromCollection(new HashSet<>());
+
+        Map<String, List<Pair<String, Integer>>> map1 = new HashMap<>();
+
+        try(DataInputStream in = new DataInputStream(new BufferedInputStream(
+                new FileInputStream("D:\\WikiGIR\\Articles\\articles_to_named_locations1"))))
+        {
+            int count = in.readInt();
+            for(int i = 0; i < count; i++)
+            {
+                String title = in.readUTF();
+
+                List<Pair<String, Integer>> l = new ArrayList<>();
+                int listSize = in.readInt();
+                for(int j = 0; j < listSize; j++)
+                {
+                    String t = in.readUTF();
+                    int cnt = in.readInt();
+                    l.add(new Pair<>(t, cnt));
+                }
+
+                map1.put(title, l);
+            }
+        }
+
+        Map<String, List<Pair<String, Integer>>> map2 = new HashMap<>();
+
+        try(DataInputStream in = new DataInputStream(new BufferedInputStream(
+                new FileInputStream("D:\\WikiGIR\\Articles\\articles_to_named_locations"))))
+        {
+            int count = in.readInt();
+            for(int i = 0; i < count; i++)
+            {
+                String title = in.readUTF();
+
+                List<Pair<String, Integer>> l = new ArrayList<>();
+                int listSize = in.readInt();
+                for(int j = 0; j < listSize; j++)
+                {
+                    int t = in.readInt();
+                    int cnt = in.readInt();
+                    l.add(new Pair<>(titlesIdsMapper.getString(t), cnt));
+                }
+
+                map2.put(title, l);
+            }
+        }
+
+        System.out.println("map1.size = " + map1.size());
+        System.out.println("map2.size = " + map2.size());
+
+        List<Map.Entry<String, List<Pair<String, Integer>>>> l1 = new ArrayList<>(map1.entrySet());
+        l1.sort(Map.Entry.comparingByKey());
+
+        List<Map.Entry<String, List<Pair<String, Integer>>>> l2 = new ArrayList<>(map1.entrySet());
+        l2.sort(Map.Entry.comparingByKey());
+
+        for(int i = 0; i < l1.size(); i++)
+        {
+            if(!l1.get(i).getKey().equals(l2.get(i).getKey()))
+            {
+                System.err.println("ith value of map1 = " + l1.get(i).getKey() +
+                        " and of map2 = " + l2.get(i).getKey() + ". What is the value of map1.key in map2? " +
+                        map2.get(l1.get(i).getKey()));
+            }
+
+            if(l1.get(i).getValue().size() != l2.get(i).getValue().size())
+            {
+                System.err.println("Bad sizes... l1.key = " + l1.get(i).getKey() + ", list size = " +
+                        l1.get(i).getValue().size() + ", l2.key = " + l2.get(i).getKey() + ", list size = " +
+                        l2.get(i).getValue().size());
+            }
+
+            if(i % 10_000 == 0)
+            {
+                System.out.println("Passed " + i);
+            }
+        }
     }
 }

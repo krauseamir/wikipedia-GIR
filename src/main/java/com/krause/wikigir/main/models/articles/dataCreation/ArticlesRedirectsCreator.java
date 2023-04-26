@@ -49,14 +49,14 @@ public class ArticlesRedirectsCreator
         }
         else
         {
-            readFromXml();
+            readFromXML();
             new Serializer().serialize();
         }
 
         return this.redirectsMap;
     }
 
-    private void readFromXml()
+    private void readFromXML()
     {
         int[] processed = {0};
 

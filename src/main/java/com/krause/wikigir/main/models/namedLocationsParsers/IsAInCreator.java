@@ -48,7 +48,7 @@ public class IsAInCreator
         }
         else
         {
-            readFromXml();
+            readFromXML();
             new Serializer().serialize();
         }
 
@@ -56,7 +56,7 @@ public class IsAInCreator
     }
 
     @SuppressWarnings("unchecked")
-    private void readFromXml()
+    private void readFromXML()
     {
         int[] processed = {0};
 

@@ -30,11 +30,10 @@ public class Article extends WikiEntity
     // If the article has been manually tagged at the title level with coordinates (on Earth...) - store them here.
     private Coordinates coordinates;
 
-    // Wikipedia entities (article titles), whose articles had coordinates, and the number of times they or
-    // any of their variants (as defined by wikipedia in the [[...|...]] notation) were detected. The
-    // order of appearance in the list is the order of the entities appearance in the article.
-    // with location, it is stored as well.
-    private NamedLocationsInArticle locationsInArticle;
+    // Wikipedia entities (article title IDs), whose articles had coordinates, and the number of times they or any of
+    // their variants (as defined by wikipedia in the [[...|...]] notation) were detected. The order of appearance in
+    // the list is the order of the entities appearance in the article with location, it is stored as well.
+    private List<Pair<Integer, Integer>> namedLocations;
 
     // The top-k words (by their tf-idf values) in the article.
     private ScoresVector wordsScoresVector;
@@ -51,6 +50,11 @@ public class Article extends WikiEntity
     // modulate named locations scores in the named locations entity set weights).
     private String explicitLocatedAt;
 
+    // If the article's text was detected to contain structure such as "is a ____ in ____", "was a ____ at ____",
+    // followed by detected named locations - they are stored here (and used later to modulate named locations scores
+    // in the named locations entity set weights).
+    private Set<String> isAInLocations;
+
     // Stores the automatically assigned (when parsed) category IDs of the article's categories.
     private int[] categoryIds;
 
@@ -61,26 +65,20 @@ public class Article extends WikiEntity
      * Constructor.
      * @param title the article's title.
      */
-    public Article(String title)
+    public Article(String title, ArticleType articleType, Coordinates coordinates, int[] categories,
+                   List<Pair<Integer, Integer>> namedLocations, ScoresVector wordsScoresVector,
+                   String explicitLocatedAt, List<String> isAInLocations)
     {
         super(title);
-    }
+        this.articleType = articleType != null ? articleType : ArticleType.NONE;
+        this.coordinates = coordinates;
+        this.categoryIds = categories != null ? categories : new int[0];
+        this.namedLocations = namedLocations;
+        this.wordsScoresVector = wordsScoresVector;
+        this.explicitLocatedAt = explicitLocatedAt;
+        this.isAInLocations = isAInLocations == null ? new HashSet<>() : new HashSet<>(isAInLocations);
 
-    /**
-     * Copy constructor.
-     * @param other the article to be copied.
-     */
-    public Article(Article other)
-    {
-        super(other.title);
-        this.wordsScoresVector = other.wordsScoresVector;
-        this.namedLocationScoresVector = other.namedLocationScoresVector;
-        this.coordinates = other.coordinates;
-        this.categoryIds = other.categoryIds;
-        this.locationsInArticle = other.locationsInArticle;
-        this.articleType = other.articleType;
-        this.explicitLocatedAt = other.explicitLocatedAt;
-        this.articleViews = other.articleViews;
+        setNamedLocationsScoresVector();
     }
 
     public String getTitle()
@@ -88,77 +86,13 @@ public class Article extends WikiEntity
         return this.title;
     }
 
-    public void setWordsScoresVector(ScoresVector vec)
-    {
-        this.wordsScoresVector = vec;
-    }
-
-    public void setCoordinates(Coordinates coordinates)
-    {
-        this.coordinates = coordinates;
-    }
-
     /**
-     * Given a named locations data processed for the article, set the named locations scores vector.
-     * @param locationsInArticle        the {@link NamedLocationsInArticle} object computed for the article.
-     * @param titlesIdsMapper           a mapping from (article) title strings to their unique IDs.
+     * Returns the article's type.
+     * @return the article's type.
      */
-    public void setLocations(NamedLocationsInArticle locationsInArticle, StringsIdsMapper titlesIdsMapper)
+    public ArticleType getArticleType()
     {
-        this.locationsInArticle = locationsInArticle;
-
-        List<Pair<Integer, Float>> l = new ArrayList<>();
-
-        int totalOccurrences = locationsInArticle.getValidLocations().stream().mapToInt(x -> x.v2).sum();
-
-        for(Pair<String, Integer> namedLocation : locationsInArticle.getValidLocations())
-        {
-            if(titlesIdsMapper.getID(namedLocation.v1) == null)
-            {
-                continue;
-            }
-
-            float score = (float)(Math.sqrt((double)namedLocation.v2 / totalOccurrences));
-
-            l.add(new Pair<>(titlesIdsMapper.getID(namedLocation.v1), score));
-        }
-
-        if(l.size() > MAX_NAMED_LOCATIONS_PER_ARTICLE)
-        {
-            l.sort(Comparator.comparingDouble(Pair::getV2));
-            Collections.reverse(l);
-            l = l.subList(0, MAX_NAMED_LOCATIONS_PER_ARTICLE);
-        }
-
-        double length = Math.sqrt(l.stream().mapToDouble(Pair::getV2).map(d -> Math.pow(d, 2)).sum());
-        l.forEach(p -> p.v2 /= (float)length);
-
-        l.sort(Comparator.comparingInt(Pair::getV1));
-
-        int[] ids = new int[l.size()];
-        float[] scores = new float[l.size()];
-        for(int i = 0; i < l.size(); i++)
-        {
-            ids[i] = l.get(i).v1;
-            scores[i] = l.get(i).v2;
-        }
-
-        this.namedLocationScoresVector = new ScoresVector(ids, scores);
-    }
-
-    public void setLocationType(ArticleType type)
-    {
-        this.articleType = type;
-    }
-
-    public void setExplicitLocatedAt(String location)
-    {
-        this.explicitLocatedAt = location;
-    }
-
-    public void setCategoryIds(int[] categoryIds)
-    {
-        this.categoryIds = categoryIds;
+        return this.articleType;
     }
 
     public Coordinates getCoordinates(WikiEntity requestingEntity)
@@ -166,14 +100,22 @@ public class Article extends WikiEntity
         return this.coordinates;
     }
 
-    public NamedLocationsInArticle getLocationsData()
-    {
-        return this.locationsInArticle;
-    }
-
+    /**
+     * Returns the article's tf-idf scores vector of the top words.
+     * @return the article's tf-idf scores vector of the top words.
+     */
     public ScoresVector getWordsScoresVector()
     {
         return this.wordsScoresVector;
+    }
+
+    /**
+     * Returns the named locations stored in the article.
+     * @return the named locations stored in the article.
+     */
+    public List<Pair<Integer, Integer>> getNamedLocations()
+    {
+        return this.namedLocations;
     }
 
     public ScoresVector getNamedLocationsScoresVector()
@@ -181,16 +123,28 @@ public class Article extends WikiEntity
         return this.namedLocationScoresVector;
     }
 
-    public ArticleType getLocationType()
-    {
-        return this.articleType;
-    }
-
+    /**
+     * If there's a named location that was detected as being in a "located at" structure, it is returned here.
+     * @return the named location (if found during parsing), or null otherwise.
+     */
     public String getExplicitLocatedAt()
     {
         return this.explicitLocatedAt;
     }
 
+    /**
+     * Returns the set of locations which are part of a "is a ____ in ____" structure. Empty if there aren't any.
+     * @return the set of locations.
+     */
+    public Set<String> getIsAInLocations()
+    {
+        return this.isAInLocations;
+    }
+
+    /**
+     * Returns the article's category IDs.
+     * @return the article's category IDs.
+     */
     public int[] getCategoryIds()
     {
         return this.categoryIds;
@@ -216,5 +170,43 @@ public class Article extends WikiEntity
     public String toString()
     {
         return super.title;
+    }
+
+    // Transforms the named locations of the article into a scores vector, based on the root of their relative frequency
+    // of occurrence in the article (as detailed in the paper). Note that no named locations scores modulations (like
+    // is-a-in etc.) are activated here.
+    private void setNamedLocationsScoresVector()
+    {
+        List<Pair<Integer, Float>> l = new ArrayList<>();
+
+        int totalOccurrences = this.namedLocations.stream().mapToInt(nl -> nl.v2).sum();
+
+        for(Pair<Integer, Integer> namedLocation : this.namedLocations)
+        {
+            float score = (float)(Math.sqrt((double)namedLocation.v2 / totalOccurrences));
+            l.add(new Pair<>(namedLocation.v1, score));
+        }
+
+        if(l.size() > MAX_NAMED_LOCATIONS_PER_ARTICLE)
+        {
+            l.sort(Comparator.comparingDouble(Pair::getV2));
+            Collections.reverse(l);
+            l = l.subList(0, MAX_NAMED_LOCATIONS_PER_ARTICLE);
+        }
+
+        double length = Math.sqrt(l.stream().mapToDouble(Pair::getV2).map(d -> Math.pow(d, 2)).sum());
+        l.forEach(p -> p.v2 /= (float)length);
+
+        l.sort(Comparator.comparingInt(Pair::getV1));
+
+        int[] ids = new int[l.size()];
+        float[] scores = new float[l.size()];
+        for(int i = 0; i < l.size(); i++)
+        {
+            ids[i] = l.get(i).v1;
+            scores[i] = l.get(i).v2;
+        }
+
+        this.namedLocationScoresVector = new ScoresVector(ids, scores);
     }
 }

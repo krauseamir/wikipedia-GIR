@@ -22,7 +22,7 @@ import java.io.*;
 public class ArticlesTypeCreator
 {
     // 0 = all pages.
-    private static final int PAGES_LIMIT = 0;
+    private static final int ARTICLES_LIMIT = 0;
 
     private static final Pattern BIRTHS_CAT = Pattern.compile("\\d+s?_births");
     private static final Pattern DEATHS_CAT = Pattern.compile("\\d+s?_deaths");
@@ -136,7 +136,7 @@ public class ArticlesTypeCreator
                             }
                         }
                     }, ExceptionWrapper.Action.NOTIFY_LONG)
-                ), PAGES_LIMIT);
+                ), ARTICLES_LIMIT);
 
         this.executor.waitForTermination();
     }
