@@ -311,7 +311,6 @@ public class ArticlesNamedLocationsCreator
 
     public static void main(String[] args) throws Exception
     {
-        /*
         System.out.println("Creating coordinates mapping (or loading from disk).");
         Map<String, Coordinates> coordinates = new ArticlesCoordinatesCreator().create();
         System.out.println("Creating redirects mapping (or loading from disk).");
@@ -329,90 +328,5 @@ public class ArticlesNamedLocationsCreator
 
         System.out.println("Creating named locations (or loading from disk).");
         new ArticlesNamedLocationsCreator(titlesIdsMapper, redirects, coordinates).create();
-        */
-
-        System.out.println("Data validity");
-
-        StringsIdsMapper titlesIdsMapper = new StringsIdsMapper(GetFromConfig.filePath("wikigir.base_path",
-                "wikigir.articles.folder", "wikigir.articles.titles_to_ids_mapping.file_name"));
-
-        titlesIdsMapper.createFromCollection(new HashSet<>());
-
-        Map<String, List<Pair<String, Integer>>> map1 = new HashMap<>();
-
-        try(DataInputStream in = new DataInputStream(new BufferedInputStream(
-                new FileInputStream("D:\\WikiGIR\\Articles\\articles_to_named_locations1"))))
-        {
-            int count = in.readInt();
-            for(int i = 0; i < count; i++)
-            {
-                String title = in.readUTF();
-
-                List<Pair<String, Integer>> l = new ArrayList<>();
-                int listSize = in.readInt();
-                for(int j = 0; j < listSize; j++)
-                {
-                    String t = in.readUTF();
-                    int cnt = in.readInt();
-                    l.add(new Pair<>(t, cnt));
-                }
-
-                map1.put(title, l);
-            }
-        }
-
-        Map<String, List<Pair<String, Integer>>> map2 = new HashMap<>();
-
-        try(DataInputStream in = new DataInputStream(new BufferedInputStream(
-                new FileInputStream("D:\\WikiGIR\\Articles\\articles_to_named_locations"))))
-        {
-            int count = in.readInt();
-            for(int i = 0; i < count; i++)
-            {
-                String title = in.readUTF();
-
-                List<Pair<String, Integer>> l = new ArrayList<>();
-                int listSize = in.readInt();
-                for(int j = 0; j < listSize; j++)
-                {
-                    int t = in.readInt();
-                    int cnt = in.readInt();
-                    l.add(new Pair<>(titlesIdsMapper.getString(t), cnt));
-                }
-
-                map2.put(title, l);
-            }
-        }
-
-        System.out.println("map1.size = " + map1.size());
-        System.out.println("map2.size = " + map2.size());
-
-        List<Map.Entry<String, List<Pair<String, Integer>>>> l1 = new ArrayList<>(map1.entrySet());
-        l1.sort(Map.Entry.comparingByKey());
-
-        List<Map.Entry<String, List<Pair<String, Integer>>>> l2 = new ArrayList<>(map1.entrySet());
-        l2.sort(Map.Entry.comparingByKey());
-
-        for(int i = 0; i < l1.size(); i++)
-        {
-            if(!l1.get(i).getKey().equals(l2.get(i).getKey()))
-            {
-                System.err.println("ith value of map1 = " + l1.get(i).getKey() +
-                        " and of map2 = " + l2.get(i).getKey() + ". What is the value of map1.key in map2? " +
-                        map2.get(l1.get(i).getKey()));
-            }
-
-            if(l1.get(i).getValue().size() != l2.get(i).getValue().size())
-            {
-                System.err.println("Bad sizes... l1.key = " + l1.get(i).getKey() + ", list size = " +
-                        l1.get(i).getValue().size() + ", l2.key = " + l2.get(i).getKey() + ", list size = " +
-                        l2.get(i).getValue().size());
-            }
-
-            if(i % 10_000 == 0)
-            {
-                System.out.println("Passed " + i);
-            }
-        }
     }
 }
